@@ -211,8 +211,8 @@ typedef struct {
 typedef struct {
     sMacAddr mac;
     uint8_t status_code;
-    uint8_t reserved1;
-    uint8_t reserved2;
+    sMacAddr source_bssid;
+    sMacAddr target_bssid;
     uint8_t reserved3;
 } sNodeBssSteerResponse;
 
