@@ -326,6 +326,9 @@ test_client_steering_mandate() {
     dbg "Confirming BTM Report message was received"
     check_log ${GATEWAY} controller "CLIENT_STEERING_BTM_REPORT_MESSAGE"
 
+    dbg "Checking BTM Report source bssid"
+    check_log ${REPEATER1} agent_wlan0 "BTM report source bssid: $mac_agent1_wlan0"
+
     dbg "Confirming ACK message was received"
     check_log ${REPEATER1} agent_wlan0 "ACK_MESSAGE"
 
