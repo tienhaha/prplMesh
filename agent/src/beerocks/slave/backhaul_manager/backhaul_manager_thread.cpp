@@ -2225,10 +2225,11 @@ bool backhaul_manager::handle_1905_autoconfiguration_response(ieee1905_1::CmduMe
                     LOG(DEBUG) << FSM_CURR_STATE_STR;
                     soc->controller_discovered = true;
                     controller_bridge_mac      = src_mac;
-                    // the backhaul was operational on slave registration.
+                    // the backhaul was operational on slave registration or changed
+                    // to operational since the registration.
                     // This means that it was restarted and sending backhaul connected event
                     // is required so that the slave will re-join the controller.
-                    if (soc->operational_on_registration) {
+                    if (soc->operational_on_registration || FSM_IS_IN_STATE(OPERATIONAL)) {
                         finalize_slaves_connect_state(true, soc);
                     }
                 }
