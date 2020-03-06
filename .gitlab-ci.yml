@@ -80,6 +80,14 @@ build-in-docker-static:
 tlvf_test:
   extends: .run-test-in-docker
 
+ieee1905_transport_test:
+  extends: .run-test-in-docker
+  artifacts:
+    paths:
+      - /tmp/beerocks/logs
+    when: always
+    expire_in: 4 weeks
+
 run-tests:
   stage: test
   image: $CI_REGISTRY_IMAGE/tests-runner:18.09.7-dind
