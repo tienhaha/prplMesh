@@ -12,6 +12,7 @@
 			"flushthreshold" : 1
 		},
 		"transport" : {
+            "level" : "DEBUG"
 		},
 		"local_bus" : {
 		},
