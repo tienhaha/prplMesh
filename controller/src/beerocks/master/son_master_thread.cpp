@@ -1019,7 +1019,8 @@ bool master_thread::handle_cmdu_1905_client_steering_btm_report_message(
         LOG(ERROR) << "cmdu creation of type ACK_MESSAGE, has failed";
         return false;
     }
-    LOG(DEBUG) << "sending ACK message back to agent";
+    LOG(DEBUG) << "sending ACK message back to agent, mid=" << std::hex << int(mid);
+
     son_actions::send_cmdu_to_agent(src_mac, cmdu_tx, database);
 
     std::string client_mac = network_utils::mac_to_string(steering_btm_report->sta_mac());
