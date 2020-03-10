@@ -57,17 +57,6 @@ build-in-docker:
     paths:
       - build/install
 
-build-in-docker-alpine:
-  extends: build-in-docker
-  image: prplfoundationinc/prplmesh-builder:alpine-3.11.3
-  only:
-    - schedules
-
-build-in-docker-static:
-  extends: build-in-docker
-  variables:
-    EXTRA_CMAKE_FLAGS: "-DBUILD_SHARED_LIBS=OFF"
-
 .run-test-in-docker:
   stage: test
   extends: .in-prplmesh-builder
@@ -86,7 +75,7 @@ run-tests:
   script:
     # Try to pull from dockerhub, if it fails, the run should fail
     - tools/docker/image-pull.sh
-    - tests/test_flows.sh -v -u $RANDOM
+    - tests/test_flows.sh -v -u $RANDOM client_steering_dummy
 
   artifacts:
     paths:
@@ -102,119 +91,21 @@ run-tests:
   needs:
     - job: build-in-docker
 
-run-tests-py:
-  stage: test
-  image: $CI_REGISTRY_IMAGE/tests-runner:18.09.7-dind
-  script:
-    # Try to pull from dockerhub, if it fails, the run should fail
-    - tools/docker/image-pull.sh
-    - tests/test_flows.py -v -u $RANDOM
-
-  artifacts:
-    paths:
-      - logs
-    when: always
-
-  tags:
-    - docker
-    - docker-build
-
-  after_script:
-    - tools/docker/stop.sh -k -r
-  needs:
-    - job: build-in-docker
-
-.build-for-openwrt:
-  stage: build
-  script:
-    - mkdir -p "build/$TARGET_DEVICE"
-    - tools/docker/builder/openwrt/build.sh -v -d "$TARGET_DEVICE" -t "prplmesh-builder-$TARGET_DEVICE:$CI_COMMIT_SHORT_SHA-$CI_PIPELINE_ID" 2>&1 | tee "build/$TARGET_DEVICE/openwrt-build.log" | grep -E '^[[:blank:]]?make\[[12]\]|^Step|^ --->' --color=never --line-buffered
-  artifacts:
-    paths:
-      - "build/$TARGET_DEVICE/"
-    expire_in: 4 weeks
-    when: always
-  tags:
-    - shell
-    - docker-build
-
-.test-on-target:
-  stage: test
-  before_script:
-    # we need a list of all the targets to be able to kill them
-    - ALL_TARGETS="turris-omnia-1 glinet-b1300-1 netgear-rax40-1"
-    # kill prplmesh on each target to make sure they don't interfere with the test
-    - for i in $ALL_TARGETS ; do ssh "$i" 'pgrep -f beerocks | xargs kill -9 2>/dev/null' || true ; done
-  script:
-    - tools/deploy_ipk.sh $TARGET_DEVICE_NAME "build/$TARGET_DEVICE/"*.ipk
-    - tests/openwrt/test_status.sh $TARGET_DEVICE_NAME
-  artifacts:
-    paths:
-      - ${TARGET_DEVICE_NAME}_logs.tar.gz
-      - ${TARGET_DEVICE_NAME}_diags.log
-    when: always
-  tags:
-    - targets
-
-build-for-turris-omnia:
-  extends: .build-for-openwrt
-  variables:
-    TARGET_DEVICE: "turris-omnia"
-
-build-for-glinet-b1300:
-  extends: .build-for-openwrt
-  variables:
-    TARGET_DEVICE: "glinet-b1300"
-
-build-for-netgear-rax40:
-  extends: .build-for-openwrt
-  variables:
-    TARGET_DEVICE: "netgear-rax40"
-
-test-on-turris-omnia:
-  extends: .test-on-target
-  variables:
-    TARGET_DEVICE: turris-omnia
-    TARGET_DEVICE_NAME: turris-omnia-1
-  needs: ["build-for-turris-omnia"]
-
-test-on-glinet-b1300:
-  extends: .test-on-target
-  variables:
-    TARGET_DEVICE: glinet-b1300
-    TARGET_DEVICE_NAME: glinet-b1300-1
-  needs: ["build-for-glinet-b1300"]
-
-test-on-netgear-rax40:
-  extends: .test-on-target
-  variables:
-    TARGET_DEVICE: netgear-rax40
-    TARGET_DEVICE_NAME: netgear-rax40-1
-  needs: ["build-for-netgear-rax40"]
-
-run-certification-tests:
-  stage: test
-  variables:
-    # TESTS_TO_RUN needs to be set by the user (or the pipeline schedule)
-    GIT_CLONE_PATH: "/builds/prpl-foundation/prplMesh/"
-    # device to test with: prplmesh for dummy bwl, netgear-rax40 for dwpal on rax40
-    DEVICE_UNDER_TEST: prplmesh
-  script:
-      - |
-        if [ "$DEVICE_UNDER_TEST" != prplmesh ] ; then
-            echo "Deploying to $DEVICE_UNDER_TEST"
-            tools/deploy_ipk.sh --certification-mode $DEVICE_UNDER_TEST build/$DEVICE_UNDER_TEST/*.ipk
-        fi
-      - /easymesh_cert/run_test_file.sh -o logs -d $DEVICE_UNDER_TEST $TESTS_TO_RUN
-  artifacts:
-    paths:
-      - logs
-    when: always
-  needs:
-    - job: build-in-docker
-    - job: build-for-netgear-rax40
-  tags:
-    - certs-tests
-  timeout: 24h
-  rules:
-    - if: '$TESTS_TO_RUN'
+run-tests-2:
+  extends: run-tests
+run-tests-3:
+  extends: run-tests
+run-tests-4:
+  extends: run-tests
+run-tests-5:
+  extends: run-tests
+run-tests-6:
+  extends: run-tests
+run-tests-7:
+  extends: run-tests
+run-tests-8:
+  extends: run-tests
+run-tests-9:
+  extends: run-tests
+run-tests-10:
+  extends: run-tests
