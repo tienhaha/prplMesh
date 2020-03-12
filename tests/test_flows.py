@@ -204,6 +204,12 @@ class test_flows:
         device_ip = re.search(r'inet (?P<ip>[0-9.]+)', device_ip_output.decode('utf-8')).group('ip')
         return send_CAPI_command.UCCSocket(device_ip, ucc_port)
 
+    def get_bssid_from_radio(self, radio_mac):
+        last_two_chars = radio_mac[ len(radio_mac) - 2 : ]
+        all_chars_except_last_two = radio_mac[ : len(radio_mac) - 2 ]
+        new_last_two_chars = int(last_two_chars) + 1
+        return all_chars_except_last_two + str(new_last_two_chars)
+
     def init(self):
         '''Initialize the tests.'''
         self.start_test('init')
@@ -232,17 +238,27 @@ class test_flows:
 
         mac_repeater1_wlan0_output = self.docker_command(self.repeater1, "ip", "-o",  "link", "list", "dev", "wlan0")
         self.mac_repeater1_wlan0 = re.search(rb"link/ether " + RE_MAC, mac_repeater1_wlan0_output).group('mac').decode()
+        self.mac_repeater1_wlan0_first_bssid = self.get_bssid_from_radio(self.mac_repeater1_wlan0)
         self.debug("Repeater1 wl0: {}".format(self.mac_repeater1_wlan0))
+        self.debug("Repeater1 wl0 first bssid: {}".format(self.mac_repeater1_wlan0_first_bssid))
+
         mac_repeater1_wlan2_output = self.docker_command(self.repeater1, "ip", "-o",  "link", "list", "dev", "wlan2")
         self.mac_repeater1_wlan2 = re.search(rb"link/ether " + RE_MAC, mac_repeater1_wlan2_output).group('mac').decode()
+        self.mac_repeater1_wlan2_first_bssid = self.get_bssid_from_radio(self.mac_repeater1_wlan2)
         self.debug("Repeater1 wl2: {}".format(self.mac_repeater1_wlan2))
+        self.debug("Repeater1 wl2 first bssid: {}".format(self.mac_repeater1_wlan2_first_bssid))
 
         mac_repeater2_wlan0_output = self.docker_command(self.repeater2, "ip", "-o",  "link", "list", "dev", "wlan0")
         self.mac_repeater2_wlan0 = re.search(rb"link/ether " + RE_MAC, mac_repeater2_wlan0_output).group('mac').decode()
+        self.mac_repeater2_wlan0_first_bssid = self.get_bssid_from_radio(self.mac_repeater2_wlan0)
         self.debug("Repeater2 wl0: {}".format(self.mac_repeater2_wlan0))
+        self.debug("Repeater2 wl0 first bssid: {}".format(self.mac_repeater2_wlan0_first_bssid))
+
         mac_repeater2_wlan2_output = self.docker_command(self.repeater2, "ip", "-o",  "link", "list", "dev", "wlan2")
         self.mac_repeater2_wlan2 = re.search(rb"link/ether " + RE_MAC, mac_repeater2_wlan2_output).group('mac').decode()
+        self.mac_repeater2_wlan2_first_bssid = self.get_bssid_from_radio(self.mac_repeater2_wlan2)
         self.debug("Repeater2 wl2: {}".format(self.mac_repeater2_wlan2))
+        self.debug("Repeater2 wl2 first bssid: {}".format(self.mac_repeater2_wlan2_first_bssid))
 
     def check_log(self, device: str, program: str, regex: str) -> bool:
         '''Verify that on "device" the logfile for "program" matches "regex", fail if not.'''
@@ -535,16 +551,12 @@ class test_flows:
         self.debug("Send Client Steering Request message for Steering Mandate to CTT Agent1")
         self.gateway_ucc.dev_send_1905(self.mac_repeater1, 0x8014,
             tlv(0x9B, 0x001b, "{%s 0xe0 0x0000 0x1388 0x01 {0x000000110022} 0x01 {%s 0x73 0x24}}" %
-                (self.mac_repeater1_wlan0, self.mac_repeater2_wlan0)))
+                (self.mac_repeater1_wlan0_first_bssid, self.mac_repeater2_wlan0_first_bssid)))
         time.sleep(1)
-        self.debug("Confirming Client Steering Request message was received - mandate")
-        self.check_log(self.repeater1, "agent_wlan0", "Got steer request")
-
-        self.debug("Confirming BTM Report message was received")
         self.check_log(self.gateway, "controller", "CLIENT_STEERING_BTM_REPORT_MESSAGE")
 
         self.debug("Checking BTM Report source bssid")
-        self.check_log(self.gateway, "controller", "BTM_REPORT from source bssid %s" % self.mac_repeater1_wlan0)
+        self.check_log(self.gateway, "controller", "BTM_REPORT from source bssid %s" % self.mac_repeater1_wlan0_first_bssid)
 
         self.debug("Confirming ACK message was received")
         self.check_log(self.repeater1, "agent_wlan0", "ACK_MESSAGE")

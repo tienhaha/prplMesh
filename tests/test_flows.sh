@@ -142,39 +142,39 @@ test_optimal_path_dummy() {
     dbg "Connect dummy STA to wlan0"
     send_bwl_event ${REPEATER1} wlan0 "EVENT AP-STA-CONNECTED 11:22:33:44:55:66"
     dbg "Pre-prepare RRM Beacon Response for association handling task"
-    send_bwl_event ${REPEATER1} wlan0 "DATA RRM-BEACON-REP-RECEIVED 11:22:33:44:55:66 channel=1 dialog_token=0 measurement_rep_mode=0 op_class=0 duration=50 rcpi=-40 rsni=40 bssid=aa:bb:cc:00:00:10"
+    send_bwl_event ${REPEATER1} wlan0 "DATA RRM-BEACON-REP-RECEIVED 11:22:33:44:55:66 channel=1 dialog_token=0 measurement_rep_mode=0 op_class=0 duration=50 rcpi=-40 rsni=40 bssid=$mac_agent1_wlan0_first_bssid"
     dbg "Confirming 11k request is done by association handling task"
-    wait_for_message 2 ${REPEATER1} "beerocks_monitor_wlan0.log" "Beacon 11k request to sta 11:22:33:44:55:66 on bssid aa:bb:cc:00:00:10 channel 1"
+    wait_for_message 2 ${REPEATER1} "beerocks_monitor_wlan0.log" "Beacon 11k request to sta 11:22:33:44:55:66 on bssid $mac_agent1_wlan0_first_bssid channel 1"
 
     dbg "Update Stats"
     send_bwl_event ${REPEATER1} wlan0 "DATA STA-UPDATE-STATS 11:22:33:44:55:66 rssi=-38,-39,-40,-41 snr=38,39,40,41 uplink=1000 downlink=800"
     dbg "Pre-prepare RRM Beacon Responses for optimal path task"
     #Response for IRE1, BSSID of wlan0.0
-    send_bwl_event ${REPEATER1} wlan0 "DATA RRM-BEACON-REP-RECEIVED 11:22:33:44:55:66 channel=1 dialog_token=0 measurement_rep_mode=0 op_class=0 duration=50 rcpi=-80 rsni=10 bssid=aa:bb:cc:11:00:10"
+    send_bwl_event ${REPEATER1} wlan0 "DATA RRM-BEACON-REP-RECEIVED 11:22:33:44:55:66 channel=1 dialog_token=0 measurement_rep_mode=0 op_class=0 duration=50 rcpi=-80 rsni=10 bssid=$mac_agent1_wlan0_first_bssid"
     #Response for IRE1, BSSID of wlan2.0
-    send_bwl_event ${REPEATER1} wlan0 "DATA RRM-BEACON-REP-RECEIVED 11:22:33:44:55:66 channel=149 dialog_token=0 measurement_rep_mode=0 op_class=0 duration=50 rcpi=-80 rsni=10 bssid=aa:bb:cc:11:00:20"
+    send_bwl_event ${REPEATER1} wlan0 "DATA RRM-BEACON-REP-RECEIVED 11:22:33:44:55:66 channel=149 dialog_token=0 measurement_rep_mode=0 op_class=0 duration=50 rcpi=-80 rsni=10 bssid=$mac_agent1_wlan2_first_bssid"
     #Response for IRE2, BSSID of wlan0.0
-    send_bwl_event ${REPEATER1} wlan0 "DATA RRM-BEACON-REP-RECEIVED 11:22:33:44:55:66 channel=1 dialog_token=0 measurement_rep_mode=0 op_class=0 duration=50 rcpi=-40 rsni=40 bssid=aa:bb:cc:00:00:10"
+    send_bwl_event ${REPEATER1} wlan0 "DATA RRM-BEACON-REP-RECEIVED 11:22:33:44:55:66 channel=1 dialog_token=0 measurement_rep_mode=0 op_class=0 duration=50 rcpi=-40 rsni=40 bssid=$mac_agent2_wlan0_first_bssid"
     #Response for IRE2, BSSID of wlan2.0
-    send_bwl_event ${REPEATER1} wlan0 "DATA RRM-BEACON-REP-RECEIVED 11:22:33:44:55:66 channel=149 dialog_token=0 measurement_rep_mode=0 op_class=0 duration=50 rcpi=-80 rsni=10 bssid=aa:bb:cc:00:00:20"
+    send_bwl_event ${REPEATER1} wlan0 "DATA RRM-BEACON-REP-RECEIVED 11:22:33:44:55:66 channel=149 dialog_token=0 measurement_rep_mode=0 op_class=0 duration=50 rcpi=-80 rsni=10 bssid=$mac_agent2_wlan2_first_bssid"
     #Response for GW, BSSID of wlan0.0
-    send_bwl_event ${REPEATER1} wlan0 "DATA RRM-BEACON-REP-RECEIVED 11:22:33:44:55:66 channel=1 dialog_token=0 measurement_rep_mode=0 op_class=0 duration=50 rcpi=-80 rsni=10 bssid=00:11:22:33:00:10"
+    send_bwl_event ${REPEATER1} wlan0 "DATA RRM-BEACON-REP-RECEIVED 11:22:33:44:55:66 channel=1 dialog_token=0 measurement_rep_mode=0 op_class=0 duration=50 rcpi=-80 rsni=10 bssid=$mac_gateway_wlan0_first_bssid"
     #Response for GW, BSSID of wlan2.0
-    send_bwl_event ${REPEATER1} wlan0 "DATA RRM-BEACON-REP-RECEIVED 11:22:33:44:55:66 channel=149 dialog_token=0 measurement_rep_mode=0 op_class=0 duration=50 rcpi=-80 rsni=10 bssid=00:11:22:33:00:20"
+    send_bwl_event ${REPEATER1} wlan0 "DATA RRM-BEACON-REP-RECEIVED 11:22:33:44:55:66 channel=149 dialog_token=0 measurement_rep_mode=0 op_class=0 duration=50 rcpi=-80 rsni=10 bssid=$mac_gateway_wlan2_first_bssid"
     dbg "Confirming 11k request is done by optimal path task"
-    wait_for_message 20 ${REPEATER1} "beerocks_monitor_wlan0.log" "Beacon 11k request to sta 11:22:33:44:55:66 on bssid aa:bb:cc:11:00:20 channel 149"
+    wait_for_message 20 ${REPEATER1} "beerocks_monitor_wlan0.log" "Beacon 11k request to sta 11:22:33:44:55:66 on bssid $mac_agent1_wlan2_first_bssid channel 149"
 
     dbg "Confirming 11k request is done by optimal path task"
-    wait_for_message 20 ${REPEATER1} "beerocks_monitor_wlan0.log" "Beacon 11k request to sta 11:22:33:44:55:66 on bssid aa:bb:cc:00:00:20 channel 149"
+    wait_for_message 20 ${REPEATER1} "beerocks_monitor_wlan0.log" "Beacon 11k request to sta 11:22:33:44:55:66 on bssid $mac_agent2_wlan2_first_bssid channel 149"
 
     dbg "Confirming 11k request is done by optimal path task"
-    wait_for_message 20 ${REPEATER1} "beerocks_monitor_wlan0.log" "Beacon 11k request to sta 11:22:33:44:55:66 on bssid aa:bb:cc:11:00:10 channel 1"
+    wait_for_message 20 ${REPEATER1} "beerocks_monitor_wlan0.log" "Beacon 11k request to sta 11:22:33:44:55:66 on bssid $mac_agent1_wlan0_first_bssid channel 1"
 
     dbg "Confirming 11k request is done by optimal path task"
-    wait_for_message 20 ${REPEATER1} "beerocks_monitor_wlan0.log" "Beacon 11k request to sta 11:22:33:44:55:66 on bssid 00:11:22:33:00:20 channel 149"
+    wait_for_message 20 ${REPEATER1} "beerocks_monitor_wlan0.log" "Beacon 11k request to sta 11:22:33:44:55:66 on bssid $mac_gateway_wlan2_first_bssid channel 149"
 
     dbg "Confirming 11k request is done by optimal path task"
-    wait_for_message 20 ${REPEATER1} "beerocks_monitor_wlan0.log" "Beacon 11k request to sta 11:22:33:44:55:66 on bssid 00:11:22:33:00:10 channel 1"
+    wait_for_message 20 ${REPEATER1} "beerocks_monitor_wlan0.log" "Beacon 11k request to sta 11:22:33:44:55:66 on bssid $mac_gateway_wlan0_first_bssid channel 1"
 
     dbg "Confirming no steer is done"
     wait_for_message 20 ${GATEWAY} "beerocks_controller.log" "could not find a better path for sta 11:22:33:44:55:66"
@@ -184,17 +184,17 @@ test_optimal_path_dummy() {
     send_bwl_event ${REPEATER1} wlan0 "DATA STA-UPDATE-STATS 11:22:33:44:55:66 rssi=-58,-59,-60,-61 snr=18,19,20,21 uplink=100 downlink=80"
     dbg "Pre-prepare RRM Beacon Responses for optimal path task"
     #Response for IRE1, BSSID of wlan0.0
-    send_bwl_event ${REPEATER1} wlan0 "DATA RRM-BEACON-REP-RECEIVED 11:22:33:44:55:66 channel=1 dialog_token=0 measurement_rep_mode=0 op_class=0 duration=50 rcpi=-30 rsni=50 bssid=aa:bb:cc:11:00:10"
+    send_bwl_event ${REPEATER1} wlan0 "DATA RRM-BEACON-REP-RECEIVED 11:22:33:44:55:66 channel=1 dialog_token=0 measurement_rep_mode=0 op_class=0 duration=50 rcpi=-30 rsni=50 bssid=$mac_agent1_wlan0_first_bssid"
     #Response for IRE1, BSSID of wlan2.0
-    send_bwl_event ${REPEATER1} wlan0 "DATA RRM-BEACON-REP-RECEIVED 11:22:33:44:55:66 channel=149 dialog_token=0 measurement_rep_mode=0 op_class=0 duration=50 rcpi=-30 rsni=50 bssid=aa:bb:cc:11:00:20"
+    send_bwl_event ${REPEATER1} wlan0 "DATA RRM-BEACON-REP-RECEIVED 11:22:33:44:55:66 channel=149 dialog_token=0 measurement_rep_mode=0 op_class=0 duration=50 rcpi=-30 rsni=50 bssid=$mac_agent1_wlan2_first_bssid"
     #Response for IRE2, BSSID of wlan0.0
-    send_bwl_event ${REPEATER1} wlan0 "DATA RRM-BEACON-REP-RECEIVED 11:22:33:44:55:66 channel=1 dialog_token=0 measurement_rep_mode=0 op_class=0 duration=50 rcpi=-60 rsni=20 bssid=aa:bb:cc:00:00:10"
+    send_bwl_event ${REPEATER1} wlan0 "DATA RRM-BEACON-REP-RECEIVED 11:22:33:44:55:66 channel=1 dialog_token=0 measurement_rep_mode=0 op_class=0 duration=50 rcpi=-60 rsni=20 bssid=$mac_agent2_wlan0_first_bssid"
     #Response for IRE2, BSSID of wlan2.0
-    send_bwl_event ${REPEATER1} wlan0 "DATA RRM-BEACON-REP-RECEIVED 11:22:33:44:55:66 channel=149 dialog_token=0 measurement_rep_mode=0 op_class=0 duration=50 rcpi=-30 rsni=50 bssid=aa:bb:cc:00:00:20"
+    send_bwl_event ${REPEATER1} wlan0 "DATA RRM-BEACON-REP-RECEIVED 11:22:33:44:55:66 channel=149 dialog_token=0 measurement_rep_mode=0 op_class=0 duration=50 rcpi=-30 rsni=50 bssid=$mac_agent2_wlan2_first_bssid"
     #Response for GW, BSSID of wlan0.0
-    send_bwl_event ${REPEATER1} wlan0 "DATA RRM-BEACON-REP-RECEIVED 11:22:33:44:55:66 channel=1 dialog_token=0 measurement_rep_mode=0 op_class=0 duration=50 rcpi=-30 rsni=50 bssid=00:11:22:33:00:10"
+    send_bwl_event ${REPEATER1} wlan0 "DATA RRM-BEACON-REP-RECEIVED 11:22:33:44:55:66 channel=1 dialog_token=0 measurement_rep_mode=0 op_class=0 duration=50 rcpi=-30 rsni=50 bssid=$mac_gateway_wlan0_first_bssid"
     #Response for GW, BSSID of wlan2.0
-    send_bwl_event ${REPEATER1} wlan0 "DATA RRM-BEACON-REP-RECEIVED 11:22:33:44:55:66 channel=149 dialog_token=0 measurement_rep_mode=0 op_class=0 duration=50 rcpi=-30 rsni=50 bssid=00:11:22:33:00:20"
+    send_bwl_event ${REPEATER1} wlan0 "DATA RRM-BEACON-REP-RECEIVED 11:22:33:44:55:66 channel=149 dialog_token=0 measurement_rep_mode=0 op_class=0 duration=50 rcpi=-30 rsni=50 bssid=$mac_gateway_wlan2_first_bssid"
     dbg "Confirming steering is requested by optimal path task"
     wait_for_message 20 ${GATEWAY} "beerocks_controller.log" "optimal_path_task: steering"
 
@@ -202,9 +202,9 @@ test_optimal_path_dummy() {
     dbg "Connect dummy STA to wlan0"
     send_bwl_event ${REPEATER1} wlan0 "EVENT AP-STA-CONNECTED 11:22:33:44:55:77"
     dbg "Pre-prepare RRM Beacon Response with error for association handling task"
-    send_bwl_event ${REPEATER1} wlan0 "DATA RRM-BEACON-REP-RECEIVED 11:22:33:44:55:77 channel=0 dialog_token=0 measurement_rep_mode=4 op_class=0 duration=0 rcpi=0 rsni=0 bssid=aa:bb:cc:00:00:10"
+    send_bwl_event ${REPEATER1} wlan0 "DATA RRM-BEACON-REP-RECEIVED 11:22:33:44:55:77 channel=0 dialog_token=0 measurement_rep_mode=4 op_class=0 duration=0 rcpi=0 rsni=0 bssid=$mac_agent1_wlan0_first_bssid"
     dbg "Confirming 11k request is done by association handling task"
-    wait_for_message 20 ${REPEATER1} "beerocks_monitor_wlan0.log" "Beacon 11k request to sta 11:22:33:44:55:77 on bssid aa:bb:cc:00:00:10 channel 1"
+    wait_for_message 20 ${REPEATER1} "beerocks_monitor_wlan0.log" "Beacon 11k request to sta 11:22:33:44:55:77 on bssid $mac_agent1_wlan0_first_bssid channel 1"
 
     dbg "Confirming STA doesn't support beacon measurement"
     wait_for_message 20 ${GATEWAY} "beerocks_controller.log" "setting sta 11:22:33:44:55:77 as beacon measurement unsupported"
@@ -221,7 +221,7 @@ test_client_steering_dummy() {
     dbg "Connect dummy STA to wlan0"
     send_bwl_event ${REPEATER1} wlan0 "EVENT AP-STA-CONNECTED ${sta_mac}"
     dbg "Send steer request "
-    eval send_bml_command "steer_client \"${sta_mac} ${mac_agent1_wlan2}\"" $redirect
+    eval send_bml_command "steer_client \"${sta_mac} ${mac_agent1_wlan2_first_bssid}\"" $redirect
     sleep 1
 
     dbg "Confirming Client Association Control Request message was received (UNBLOCK)"
@@ -345,6 +345,19 @@ get_alid(){
     send_CAPI_command $1 "dev_get_parameter,program,map,parameter,ALid"> /dev/null 2>&1
     echo ${capi_command_reply#*'ALid,'}
 }
+
+get_bssid_from_radio() {
+    radio_mac=$1
+    last_two_chars=$(echo "$radio_mac" | awk '{print substr($0,length-1,2)}')
+    all_chars_except_last_two=$(echo "$radio_mac" | awk '{print substr($0,0,length-2)}')
+
+    # Increment number by 1
+    new_last_two_chars="$((last_two_chars + 1))"
+    new_mac=$all_chars_except_last_two$new_last_two_chars
+
+    echo "$new_mac"
+}
+
 test_init() {
     status "test initialization"
 
@@ -370,16 +383,26 @@ test_init() {
     dbg "mac_agent1 = ${mac_agent1}"
     dbg "mac_agent2 = ${mac_agent2}"
 
+    mac_gateway_wlan0=$(docker exec ${GATEWAY} ip -o l list dev wlan0 | sed 's%.*link/ether \([0-9a-f:]*\).*%\1%')
+    mac_gateway_wlan0_first_bssid=$(get_bssid_from_radio "${mac_gateway_wlan0}")
+    mac_gateway_wlan2=$(docker exec ${GATEWAY} ip -o l list dev wlan2 | sed 's%.*link/ether \([0-9a-f:]*\).*%\1%')
+    mac_gateway_wlan2_first_bssid=$(get_bssid_from_radio "${mac_gateway_wlan2}")
+
     mac_agent1_wlan0=$(docker exec ${REPEATER1} ip -o l list dev wlan0 | sed 's%.*link/ether \([0-9a-f:]*\).*%\1%')
+    mac_agent1_wlan0_first_bssid=$(get_bssid_from_radio "${mac_agent1_wlan0}")
+
     dbg "mac_agent1_wlan0 = ${mac_agent1_wlan0}"
 
     mac_agent2_wlan0=$(docker exec ${REPEATER2} ip -o l list dev wlan0 | sed 's%.*link/ether \([0-9a-f:]*\).*%\1%')
+    mac_agent2_wlan0_first_bssid=$(get_bssid_from_radio "${mac_agent2_wlan0}")
     dbg "mac_agent2_wlan0 = ${mac_agent2_wlan0}"
 
     mac_agent1_wlan2=$(docker exec ${REPEATER1} ip -o l list dev wlan2 | sed 's%.*link/ether \([0-9a-f:]*\).*%\1%')
+    mac_agent1_wlan2_first_bssid=$(get_bssid_from_radio "${mac_agent1_wlan2}")
     dbg "mac_agent1_wlan2 = ${mac_agent1_wlan2}"
 
     mac_agent2_wlan2=$(docker exec ${REPEATER2} ip -o l list dev wlan2 | sed 's%.*link/ether \([0-9a-f:]*\).*%\1%')
+    mac_agent2_wlan2_first_bssid=$(get_bssid_from_radio "${mac_agent2_wlan2}")
     dbg "mac_agent2_wlan2 = ${mac_agent2_wlan2}"
 
 }
