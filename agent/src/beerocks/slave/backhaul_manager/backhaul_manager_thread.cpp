@@ -276,6 +276,16 @@ bool backhaul_manager::socket_disconnected(Socket *sd)
                 finalize_slaves_connect_state(true, slaves_sockets.front());
             }
             LOG(INFO) << "disconnected slave sockets has been deleted";
+
+            if (m_eFSMState >= EState::CONNECT_TO_MASTER) {
+                LOG(INFO)
+                    << "Sending topology notification to the controller on son_slave disconnect";
+                if (!cmdu_tx.create(0, ieee1905_1::eMessageType::TOPOLOGY_NOTIFICATION_MESSAGE)) {
+                    LOG(ERROR) << "cmdu creation of type TOPOLOGY_NOTIFICATION_MESSAGE, has failed";
+                    return false;
+                }
+                send_cmdu_to_bus(cmdu_tx, controller_bridge_mac, bridge_info.mac);
+            }
             return false;
         } else {
             ++it;
@@ -1487,6 +1497,15 @@ bool backhaul_manager::handle_slave_backhaul_message(std::shared_ptr<SSlaveSocke
                 LOG(ERROR) << "failed start agent_ucc_listener";
                 return false;
             }
+        }
+
+        if (m_eFSMState >= EState::CONNECT_TO_MASTER) {
+            LOG(INFO) << "Sending topology notification to the controller on reconnected son_slave";
+            if (!cmdu_tx.create(0, ieee1905_1::eMessageType::TOPOLOGY_NOTIFICATION_MESSAGE)) {
+                LOG(ERROR) << "cmdu creation of type TOPOLOGY_NOTIFICATION_MESSAGE, has failed";
+                return false;
+            }
+            return send_cmdu_to_bus(cmdu_tx, controller_bridge_mac, bridge_info.mac);
         }
 
         LOG(DEBUG) << "ACTION_BACKHAUL_REGISTER_REQUEST sta_iface=" << soc->sta_iface
