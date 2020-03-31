@@ -70,6 +70,9 @@ Socket *monitor_rssi::get_arp_socket() { return arp_socket_class; }
 
 void monitor_rssi::arp_recv()
 {
+
+    LOG(DEBUG) << "arp_recv";
+
     if (!mon_db) {
         LOG(WARNING) << "monitor is not attached yet, mon_db=nullptr";
         return;
@@ -92,7 +95,7 @@ void monitor_rssi::arp_recv()
     uint16_t proto_type = (uint16_t)(((rx_buffer[12]) << 8) + rx_buffer[13]);
     arphdr              = (network_utils::arp_hdr *)(rx_buffer + 6 + 6 + 2);
     if ((proto_type != ETH_P_ARP) || (ntohs(arphdr->opcode) != ARPOP_REPLY)) {
-        // LOG(DEBUG) << "proto_type or arphdr->opcode are wrong type! proto_type=" << proto_type << " ETH_P_ARP= " << ETH_P_ARP << " arphdr->opcode=" << ntohs(arphdr->opcode);
+         LOG(DEBUG) << "proto_type or arphdr->opcode are wrong type! proto_type=" << proto_type << " ETH_P_ARP= " << ETH_P_ARP << " arphdr->opcode=" << ntohs(arphdr->opcode);
         return;
     }
 
@@ -104,13 +107,13 @@ void monitor_rssi::arp_recv()
     }
 
     if (sta_node == nullptr) {
-        //LOG(DEBUG) << "can't find node by mac=" << sta_mac << " or by ipv4=" << sta_ip << " in db! dropping arp reply";
+        LOG(DEBUG) << "can't find node by mac=" << sta_mac << " or by ipv4=" << sta_ip << " in db! dropping arp reply";
         return;
     }
 
     auto arp_state = sta_node->get_arp_state();
     if (arp_state == monitor_sta_node::WAIT_FIRST_REPLY) {
-        //LOG(DEBUG) << "arp_recv, state WAIT_FIRST_REPLY";
+        LOG(DEBUG) << "arp_recv, state WAIT_FIRST_REPLY";
         //sending notification to slave->master.
         auto id_list = sta_node->get_rx_rssi_request_id_list();
 
@@ -175,15 +178,15 @@ void monitor_rssi::arp_recv()
             UTILS_SLEEP_MSEC(1);
         }
         sta_node->set_arp_state(monitor_sta_node::WAIT_REPLY);
-        //LOG(DEBUG) << "state WAIT_FIRST_REPLY --> WAIT_REPLY , sta_mac = " << sta_mac;
+        LOG(DEBUG) << "state WAIT_FIRST_REPLY --> WAIT_REPLY , sta_mac = " << sta_mac;
     } else if (arp_state == monitor_sta_node::WAIT_REPLY) {
         sta_node->set_last_change_time();
         sta_node->arp_recv_count_inc();
-        //LOG(DEBUG) << " on_arp_recv, sta_mac = " <<  sta_mac << " sta_node->arp_recv_count = " << (int)sta_node->arp_recv_count;
+        LOG(DEBUG) << " on_arp_recv, sta_mac = " <<  sta_mac << " sta_node->arp_recv_count = " << (int)sta_node->arp_recv_count_get();
         if (sta_node->arp_recv_count_get() >= mon_db->MONITOR_ARP_COUNT_OK) {
             sta_node->set_arp_state(monitor_sta_node::SEND_RESPONSE);
             sta_node->set_rx_rssi_ready(false);
-            //LOG(DEBUG) << " state WAIT_REPLY -> SEND_RESPONSE , sta_mac = " << sta_mac << " ip=" << sta_node->ip;
+            LOG(DEBUG) << " state WAIT_REPLY -> SEND_RESPONSE , sta_mac = " << sta_mac << " ip=" << sta_node->get_ipv4();
         }
     }
 }
@@ -218,8 +221,8 @@ void monitor_rssi::process()
                     sta_stats.rx_rssi_prev = sta_stats.rx_rssi_curr;
                 }
                 int8_t delta_val = abs(sta_stats.rx_rssi_curr - sta_stats.rx_rssi_prev);
-                //LOG(DEBUG) << ">> monitor_sta_node::IDLE, MAC=" << sta_mac << " sta_stats.rx_rssi_curr=" << int(sta_stats.rx_rssi_curr) << " sta_stats.rx_rssi_prev="<<int(sta_stats.rx_rssi_prev) << " delta_val=" << int(delta_val);
-                // If radio is 2.4 Ghz, send notification even though threshold is not crossed
+                LOG(DEBUG) << ">> monitor_sta_node::IDLE, MAC=" << sta_mac << " sta_stats.rx_rssi_curr=" << int(sta_stats.rx_rssi_curr) << " sta_stats.rx_rssi_prev="<<int(sta_stats.rx_rssi_prev) << " delta_val=" << int(delta_val);
+                //If radio is 2.4 Ghz, send notification even though threshold is not crossed
                 if (delta_val >= conf_rx_rssi_notification_delta_db &&
                     (!is_5ghz ||
                      sta_stats.rx_rssi_curr <= conf_rx_rssi_notification_threshold_dbm)) {
@@ -258,7 +261,7 @@ void monitor_rssi::process()
                 }
             }
         } else if (arp_state == monitor_sta_node::SEND_RESPONSE) {
-            //LOG(INFO) << "state RESPONSE sta_node->pend_rx_rssi_ready=" << int(sta_node->pend_rx_rssi_ready);
+            LOG(INFO) << "state RESPONSE sta_node->get_rx_rssi_ready=" << int(sta_node->get_rx_rssi_ready());
             if (sta_node->get_rx_rssi_ready()) {
                 sta_node->set_rx_rssi_ready(false);
                 sta_node->arp_recv_count_clear();
@@ -297,10 +300,15 @@ void monitor_rssi::process()
                 sta_node->arp_retry_count_clear();
                 sta_node->set_arp_burst(false);
                 sta_node->set_arp_state(monitor_sta_node::IDLE);
-                //LOG(DEBUG) << "state WAIT_REPLY|WAIT_FIRST_REPLY -> IDLE , sta_mac = " << sta_mac << "ip=" << sta_node->ip;
+                LOG(DEBUG) << "state WAIT_REPLY|WAIT_FIRST_REPLY -> IDLE , sta_mac = " << sta_mac << "ip=" << sta_node->get_ipv4();
             } else {
                 sta_node->set_arp_state(monitor_sta_node::SEND_ARP);
-                //LOG(DEBUG) << "state WAIT_REPLY|WAIT_FIRST_REPLY --> SEND_ARP, timeout, ip=" << sta_node->ip << " recv_count=" <<  (int)sta_node->arp_recv_count << " retry_count=" << (int)sta_node->arp_retry_count << " sta_mac = "<< sta_mac;
+                LOG(DEBUG) << "state WAIT_REPLY|WAIT_FIRST_REPLY --> SEND_ARP, timeout, ip="
+                           << sta_node->get_ipv4()
+                           << " recv_count=" << (int)sta_node->arp_recv_count_get()
+                           << " retry_count=" << (int)sta_node->arp_retry_count_get()
+                           << " sta_mac = " << sta_mac
+                           << " arp_state=" << (int)sta_node->get_arp_state();
             }
         }
 
@@ -315,6 +323,9 @@ void monitor_rssi::process()
 
             auto sta_vap_id = sta_node->get_vap_id();
             auto vap_node   = mon_db->vap_get_by_id(sta_vap_id);
+            // auto radio_node = mon_db->get_radio_node();
+            // std::string radio_mac;
+            // network_utils::linux_iface_get_mac(radio_node->get_iface(), radio_mac);
             if (vap_node == nullptr) {
                 LOG(ERROR) << "can't find sta vap_id=" << sta_vap_id;
                 return;
@@ -323,6 +334,7 @@ void monitor_rssi::process()
             if (!conf_disable_arp) {
                 std::string arp_iface            = vap_node->get_bridge_iface();
                 std::string arp_iface_ipv4       = vap_node->get_bridge_ipv4();
+                // std::string arp_iface_mac        = radio_mac;
                 std::string arp_iface_mac        = vap_node->get_bridge_mac();
                 std::string sta_bridge_4addr_mac = sta_node->get_bridge_4addr_mac();
                 bool is_4addr_client    = (sta_bridge_4addr_mac != network_utils::ZERO_MAC_STRING);
@@ -335,7 +347,8 @@ void monitor_rssi::process()
                            << ", arp_iface_mac = " << arp_iface_mac
                            << ", is_4addr_client = " << int(is_4addr_client)
                            << ", sta_mac = " << sta_mac << ", dest_ip = " << sta_node->get_ipv4()
-                           << ", dst_mac = " << arp_dst_mac;
+                           << ", dst_mac = " << arp_dst_mac
+                           << ", arp state=" << int(sta_node->get_arp_state());
 
                 network_utils::arp_send(arp_iface, sta_node->get_ipv4(), arp_iface_ipv4,
                                         network_utils::mac_from_string(arp_dst_mac),
