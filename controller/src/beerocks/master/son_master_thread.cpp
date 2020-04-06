@@ -1572,7 +1572,7 @@ bool master_thread::handle_cmdu_1905_topology_notification(const std::string &sr
         }
 #endif
 
-        son_actions::handle_completed_connection(database, cmdu_tx, tasks, client_mac_str);
+        // son_actions::handle_completed_connection(database, cmdu_tx, tasks, client_mac_str);
 
     } else {
         // client disconnected
