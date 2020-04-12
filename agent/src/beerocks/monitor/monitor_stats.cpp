@@ -150,7 +150,6 @@ void monitor_stats::process()
         ap_stats_msg.client_tx_load_percent = radio_stats.client_tx_load_tot_curr;
         ap_stats_msg.client_rx_load_percent = radio_stats.client_rx_load_tot_curr;
 
-        int sta_count = 0;
         for (auto it = mon_db->sta_begin(); it != mon_db->sta_end(); ++it) {
             auto sta_mac  = it->first;
             auto sta_node = it->second;
@@ -181,10 +180,8 @@ void monitor_stats::process()
             sta_stats_msg.stats_delta_ms    = sta_stats.delta_ms;
             sta_stats_msg.rx_rssi           = sta_stats.rx_rssi_curr;
 
-            sta_count++;
+            break;
         }
-
-        LOG(DEBUG) << "sta_count=" << sta_count;
 
         beerocks_header->actionhdr()->id() = requests_list.front();
         requests_list.pop_front();
