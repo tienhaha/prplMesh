@@ -406,7 +406,7 @@ void monitor_thread::after_select(bool timeout)
                 std::chrono::milliseconds(mon_db.MONITOR_DB_POLLING_RATE_MSEC));
 
             // Update the statistics
-            update_sta_stats();
+            // update_sta_stats();
             // NOTE: Radio & VAP statistics are updated only on last poll cycle
             if (mon_db.is_last_poll())
                 update_ap_stats();
