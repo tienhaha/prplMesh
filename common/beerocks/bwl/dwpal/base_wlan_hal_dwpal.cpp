@@ -554,6 +554,8 @@ bool base_wlan_hal_dwpal::attach_ctrl_interface(int vap_id)
 
 bool base_wlan_hal_dwpal::process_nl_events()
 {
+    return true;
+    
     if (!m_dwpal_nl_ctx) {
         LOG(ERROR) << "Invalid Netlink socket used for nl events (m_dwpal_nl_ctx == nullptr)";
         return false;
