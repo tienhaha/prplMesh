@@ -489,8 +489,9 @@ bool monitor_thread::update_sta_stats()
     auto poll_cnt  = mon_db.get_poll_cnt();
     auto poll_last = mon_db.is_last_poll();
 
+    int count       = 0;
+    auto start_time = std::chrono::steady_clock::now();
     for (auto it = mon_db.sta_begin(); it != mon_db.sta_end(); ++it) {
-
         auto sta_mac  = it->first;
         auto sta_node = it->second;
 
@@ -503,11 +504,11 @@ bool monitor_thread::update_sta_stats()
         auto &sta_stats = sta_node->get_stats();
 
         // Update the stats
-        // if (!mon_wlan_hal->update_stations_stats(vap_node->get_iface(), sta_mac,
-        //                                          sta_stats.hal_stats)) {
-        //     LOG(ERROR) << "Failed updating STA (" << sta_mac << ") statistics!";
-        //     return false;
-        // }
+        if (!mon_wlan_hal->update_stations_stats(vap_node->get_iface(), sta_mac,
+                                                 sta_stats.hal_stats)) {
+            LOG(ERROR) << "Failed updating STA (" << sta_mac << ") statistics!";
+            return false;
+        }
 
         // Reset STA poll data
         if (poll_cnt == 0) {
@@ -575,8 +576,43 @@ bool monitor_thread::update_sta_stats()
             std::chrono::duration_cast<std::chrono::milliseconds>(now - sta_stats.last_update_time);
         sta_stats.delta_ms         = float(time_span.count());
         sta_stats.last_update_time = now;
+        count++;
     }
+    if (count == 0) {
+        return true;
+    }
+    // Update the measurement timestamp
+    auto end_time   = std::chrono::steady_clock::now();
+    auto delta_time = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+    LOG(DEBUG) << "sta_count=" << count << ", delta_time=" << int(delta_time.count())
+               << "[us], average=" << int(delta_time.count()) / count;
 
+    // if (mon_db.sta_begin() == mon_db.sta_end()) {
+    //     return true;
+    // }
+    // auto sta_mac_1  = mon_db.sta_begin()->first;
+    // auto sta_node_1 = mon_db.sta_begin()->second;
+
+    // if (sta_node_1 == nullptr) {
+    //     return true;
+    // }
+
+    // auto vap_node   = mon_db.vap_get_by_id(sta_node_1->get_vap_id());
+    // auto &sta_stats = sta_node_1->get_stats();
+
+    // start_time = std::chrono::steady_clock::now();
+    // for (int i = 0; i < 10000; i++) {
+    //     // Update the stats
+    //     if (!mon_wlan_hal->update_stations_stats(vap_node->get_iface(), sta_mac_1,
+    //                                              sta_stats.hal_stats)) {
+    //         return false;
+    //     }
+    // }
+    // end_time        = std::chrono::steady_clock::now();
+    // delta_time = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+
+    // LOG(DEBUG) << "delta_time10k=" << int(delta_time.count())
+    //            << ", average=" << int(delta_time.count()) / 10000;
     return true;
 }
 
