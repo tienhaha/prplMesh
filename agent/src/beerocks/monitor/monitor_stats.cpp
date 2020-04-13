@@ -179,8 +179,6 @@ void monitor_stats::process()
             sta_stats_msg.rx_load_percent   = sta_stats.rx_load_percent_curr;
             sta_stats_msg.stats_delta_ms    = sta_stats.delta_ms;
             sta_stats_msg.rx_rssi           = sta_stats.rx_rssi_curr;
-
-            break;
         }
 
         beerocks_header->actionhdr()->id() = requests_list.front();

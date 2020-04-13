@@ -1053,8 +1053,6 @@ bool mon_wlan_hal_dwpal::process_dwpal_event(char *buffer, int bufLen, const std
 
 bool mon_wlan_hal_dwpal::process_dwpal_nl_event(struct nl_msg *msg)
 {
-    return true;
-    
     struct nlmsghdr *nlh     = nlmsg_hdr(msg);
     struct genlmsghdr *gnlh  = (genlmsghdr *)nlmsg_data(nlh);
     char ifname[IF_NAMESIZE] = "\0";
