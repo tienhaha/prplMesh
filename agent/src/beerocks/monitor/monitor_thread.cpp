@@ -503,11 +503,11 @@ bool monitor_thread::update_sta_stats()
         auto &sta_stats = sta_node->get_stats();
 
         // Update the stats
-        if (!mon_wlan_hal->update_stations_stats(vap_node->get_iface(), sta_mac,
-                                                 sta_stats.hal_stats)) {
-            LOG(ERROR) << "Failed updating STA (" << sta_mac << ") statistics!";
-            return false;
-        }
+        // if (!mon_wlan_hal->update_stations_stats(vap_node->get_iface(), sta_mac,
+        //                                          sta_stats.hal_stats)) {
+        //     LOG(ERROR) << "Failed updating STA (" << sta_mac << ") statistics!";
+        //     return false;
+        // }
 
         // Reset STA poll data
         if (poll_cnt == 0) {
