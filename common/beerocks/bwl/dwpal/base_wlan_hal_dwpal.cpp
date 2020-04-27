@@ -442,7 +442,7 @@ bool base_wlan_hal_dwpal::set(const std::string &param, const std::string &value
 {
     const std::string cmd = "SET " + param + " " + value;
     if (!dwpal_send_cmd(cmd, vap_id)) {
-        LOG(ERROR) << "FAiled setting param " << param;
+        LOG(ERROR) << "Failed setting param " << param;
         return false;
     }
 
@@ -453,6 +453,38 @@ bool base_wlan_hal_dwpal::ping()
 {
     if (!dwpal_send_cmd("PING")) {
         return false;
+    }
+
+    return true;
+}
+
+bool base_wlan_hal_dwpal::dwpal_send_cmd(const std::string &cmd, parsed_line_t &reply,
+                                         int vap_id)
+{
+    if (!dwpal_send_cmd(cmd, vap_id)) {
+        return false;
+    }
+
+    if (strncmp(m_wpa_ctrl_buffer, "", 1)) {
+        // if reply is not empty
+        std::stringstream ss_in(m_wpa_ctrl_buffer);
+        parse_line(ss_in, {'\n', '='}, reply);
+    }
+
+    return true;
+}
+
+bool base_wlan_hal_dwpal::dwpal_send_cmd(const std::string &cmd, parsed_multiline_t &reply,
+                                         int vap_id)
+{
+    if (!dwpal_send_cmd(cmd, vap_id)) {
+        return false;
+    }
+
+    if (strncmp(m_wpa_ctrl_buffer, "", 1)) {
+        // if reply is not empty
+        std::stringstream ss_in(m_wpa_ctrl_buffer);
+        parse_multiline(ss_in, {'\n', ' ', '='}, reply);
     }
 
     return true;
