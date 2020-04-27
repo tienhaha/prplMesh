@@ -266,8 +266,8 @@ bool socket_thread::work()
                                .count();
 
     if (m_select_timeout_msec > 0 && awake_time_msec > m_select_timeout_msec) {
-        THREAD_LOG(WARNING) << "Thread awake time is exceptionally long: " << int(awake_time_msec)
-                            << " [ms]";
+        // THREAD_LOG(WARNING) << "Thread awake time is exceptionally long: " << int(awake_time_msec)
+        //                     << " [ms]";
     }
 
     int sel_ret = select.selectSocket();
