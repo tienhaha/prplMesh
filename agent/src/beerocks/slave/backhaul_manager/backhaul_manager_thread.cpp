@@ -2438,6 +2438,7 @@ bool backhaul_manager::handle_ap_metrics_query(ieee1905_1::CmduMessageRx &cmdu_r
                                                const std::string &src_mac)
 {
     std::vector<sMacAddr> bssid;
+<<<<<<< HEAD
     const auto mid           = cmdu_rx.getMessageId();
     auto ap_metric_query_tlv = cmdu_rx.getClass<wfa_map::tlvApMetricQuery>();
     if (!ap_metric_query_tlv) {
@@ -2446,6 +2447,16 @@ bool backhaul_manager::handle_ap_metrics_query(ieee1905_1::CmduMessageRx &cmdu_r
     }
     for (size_t bssid_idx = 0; bssid_idx < ap_metric_query_tlv->bssid_list_length(); bssid_idx++) {
         auto bssid_tuple = ap_metric_query_tlv->bssid_list(bssid_idx);
+=======
+    const auto mid            = cmdu_rx.getMessageId();
+    auto ap_metrics_query_tlv = cmdu_rx.getClass<wfa_map::tlvApMetricQuery>();
+    if (!ap_metrics_query_tlv) {
+        LOG(ERROR) << "AP Metrics Query CMDU mid=" << mid << " does not have AP Metric Query TLV";
+        return false;
+    }
+    for (size_t bssid_idx = 0; bssid_idx < ap_metrics_query_tlv->bssid_list_length(); bssid_idx++) {
+        auto bssid_tuple = ap_metrics_query_tlv->bssid_list(bssid_idx);
+>>>>>>> agent: backhaul_manager: Implement AP Metrics Query/Response message
         if (!std::get<0>(bssid_tuple)) {
             LOG(ERROR) << "Failed to get bssid " << bssid_idx << " from AP_METRICS_QUERY";
             return false;
@@ -2457,7 +2468,11 @@ bool backhaul_manager::handle_ap_metrics_query(ieee1905_1::CmduMessageRx &cmdu_r
 
     auto ret = false;
     for (auto socket : slaves_sockets) {
+<<<<<<< HEAD
         for (const auto &mac : bssid) {
+=======
+        for (auto mac : bssid) {
+>>>>>>> agent: backhaul_manager: Implement AP Metrics Query/Response message
             int i = 0;
             if (mac == socket->vaps_list.vaps[i].mac) {
                 LOG(DEBUG) << "Forwarding AP_METRICS_QUERY_MESSAGE message to son_slave, bssid: "
@@ -2467,18 +2482,27 @@ bool backhaul_manager::handle_ap_metrics_query(ieee1905_1::CmduMessageRx &cmdu_r
                     cmdu_tx.create(mid, ieee1905_1::eMessageType::AP_METRICS_QUERY_MESSAGE);
                 if (!forward) {
                     LOG(ERROR) << "Failed to create AP_METRICS_QUERY_MESSAGE";
+<<<<<<< HEAD
                     return false;
+=======
+>>>>>>> agent: backhaul_manager: Implement AP Metrics Query/Response message
                 }
 
                 auto query = cmdu_tx.addClass<wfa_map::tlvApMetricQuery>();
                 if (!query) {
                     LOG(ERROR) << "Failed addClass<wfa_map::tlvApMetricQuery>";
+<<<<<<< HEAD
                     return false;
+=======
+>>>>>>> agent: backhaul_manager: Implement AP Metrics Query/Response message
                 }
 
                 if (!query->alloc_bssid_list(1)) {
                     LOG(ERROR) << "Failed allocate memory for bssid_list";
+<<<<<<< HEAD
                     return false;
+=======
+>>>>>>> agent: backhaul_manager: Implement AP Metrics Query/Response message
                 }
 
                 auto list         = query->bssid_list(0);
@@ -2507,14 +2531,23 @@ bool backhaul_manager::handle_slave_ap_metrics_response(ieee1905_1::CmduMessageR
     const auto mid = cmdu_rx.getMessageId();
     LOG(DEBUG) << "Received AP_METRICS_RESPONSE_MESSAGE, mid=" << std::hex << int(mid);
 
+<<<<<<< HEAD
     auto ap_metrics_tlv = cmdu_rx.getClass<wfa_map::tlvApMetrics>();
     if (!ap_metrics_tlv) {
+=======
+    auto ap_metric_tlv = cmdu_rx.getClass<wfa_map::tlvApMetrics>();
+    if (!ap_metric_tlv) {
+>>>>>>> agent: backhaul_manager: Implement AP Metrics Query/Response message
         LOG(ERROR) << "Failed cmdu_rx.getClass<wfa_map::tlvApMetrics>(), mid=" << std::hex
                    << int(mid);
         return false;
     }
 
+<<<<<<< HEAD
     auto bssid_tlv = ap_metrics_tlv->bssid();
+=======
+    auto bssid_tlv = ap_metric_tlv->bssid();
+>>>>>>> agent: backhaul_manager: Implement AP Metrics Query/Response message
     auto mac       = std::find_if(
         m_ap_metric_query.begin(), m_ap_metric_query.end(),
         [&bssid_tlv](sApMetricsQuery const &query) { return query.bssid == bssid_tlv; });
@@ -2527,6 +2560,7 @@ bool backhaul_manager::handle_slave_ap_metrics_response(ieee1905_1::CmduMessageR
 
     sApMetrics metric;
     // Copy data to the response vector
+<<<<<<< HEAD
     metric.bssid               = ap_metrics_tlv->bssid();
     metric.channel_utilization = ap_metrics_tlv->channel_utilization();
     metric.number_of_stas_currently_associated =
@@ -2535,6 +2569,16 @@ bool backhaul_manager::handle_slave_ap_metrics_response(ieee1905_1::CmduMessageR
     auto info                           = ap_metrics_tlv->estimated_service_info_field();
     if (ap_metrics_tlv->estimated_service_info_field_length()) {
         for (size_t i = 0; i < ap_metrics_tlv->estimated_service_info_field_length(); i++) {
+=======
+    metric.bssid               = ap_metric_tlv->bssid();
+    metric.channel_utilization = ap_metric_tlv->channel_utilization();
+    metric.number_of_stas_currently_associated =
+        ap_metric_tlv->number_of_stas_currently_associated();
+    metric.estimated_service_parameters = ap_metric_tlv->estimated_service_parameters();
+    auto info                           = ap_metric_tlv->estimated_service_info_field();
+    if (ap_metric_tlv->estimated_service_info_field_length()) {
+        for (size_t i = 0; i < ap_metric_tlv->estimated_service_info_field_length(); i++) {
+>>>>>>> agent: backhaul_manager: Implement AP Metrics Query/Response message
             metric.estimated_service_info_field.push_back(info[i]);
         }
     }
