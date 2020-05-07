@@ -14,6 +14,10 @@
 
 #include <beerocks/tlvf/beerocks_message.h>
 
+#include <tlvf/ieee_1905_1/tlvMacAddress.h>
+#include <tlvf/wfa_map/tlvApMetric.h>
+#include <tlvf/wfa_map/tlvApMetricQuery.h>
+
 #include <cmath>
 #include <vector>
 
@@ -653,12 +657,93 @@ bool monitor_thread::update_ap_stats()
     return true;
 }
 
+bool monitor_thread::handle_ap_metrics_query(Socket &sd, ieee1905_1::CmduMessageRx &cmdu_rx)
+{
+    const auto mid            = cmdu_rx.getMessageId();
+    auto ap_metrics_query_tlv = cmdu_rx.getClass<wfa_map::tlvApMetricQuery>();
+    sMacAddr bssid_response;
+    if (!ap_metrics_query_tlv) {
+        LOG(ERROR) << "AP Metrics Query CMDU mid=" << mid << " does not have AP Metric Query TLV";
+        return false;
+    }
+    for (size_t bssid_idx = 0; bssid_idx < ap_metrics_query_tlv->bssid_list_length(); bssid_idx++) {
+        auto bssid = ap_metrics_query_tlv->bssid_list(bssid_idx);
+        if (!std::get<0>(bssid)) {
+            LOG(ERROR) << "Failed to get bssid " << bssid_idx << " from AP_METRICS_QUERY";
+            return false;
+        }
+        LOG(DEBUG) << "Received AP_METRICS_QUERY_MESSAGE, mid=" << std::hex << int(mid)
+                   << "  bssid " << std::get<1>(bssid);
+        bssid_response = std::get<1>(bssid);
+    }
+    //TODO: add
+    auto cmdu_header = cmdu_tx.create(mid, ieee1905_1::eMessageType::AP_METRICS_RESPONSE_MESSAGE);
+
+    if (!cmdu_header) {
+        LOG(ERROR) << "Failed building IEEE1905 AP_METRICS_RESPONSE_MESSAGE";
+        return false;
+    }
+
+    auto ap_metrics_response_tlv = cmdu_tx.addClass<wfa_map::tlvApMetric>();
+
+    if (!ap_metrics_response_tlv) {
+        LOG(ERROR) << "Couldn't addClass tlvApMetric";
+    }
+
+    //TODO: fill ap_metrics_response_tlv with valid data (now valid just bssid_response)
+    uint8_t buf[10];
+    wfa_map::tlvApMetric::sEstimatedService estimated_service_parameters;
+    estimated_service_parameters.include_ac_be = 1;
+
+    ap_metrics_response_tlv->bssid()                               = bssid_response;
+    ap_metrics_response_tlv->channel_utilization()                 = 10;
+    ap_metrics_response_tlv->number_of_stas_currently_associated() = 2;
+    ap_metrics_response_tlv->estimated_service_parameters()        = estimated_service_parameters;
+
+    if (!ap_metrics_response_tlv->alloc_estimated_service_info_field(sizeof(buf)))
+        LOG(ERROR)
+            << "Couldn't allocate ap_metrics_response_tlv->alloc_estimated_service_info_field";
+    auto tmp = ap_metrics_response_tlv->estimated_service_info_field();
+    std::copy_n(buf, sizeof(buf), tmp);
+
+    //TODO: find the way how to check policy config was enabled or not
+    //if (policy config) {
+    //    auto tlv1 = mdu_tx.addClass<wfa_map::tlv>(); //STA tlvAssociatedStaLinkMetrics
+    //
+    //    //TODO add tlvTrafficStats
+    //}
+
+    LOG(DEBUG) << "Sending AP_METRICS_RESPONSE_MESSAGE to slave_socket, mid=" << std::hex
+               << int(mid);
+
+    return message_com::send_cmdu(slave_socket, cmdu_tx);
+}
+
+bool monitor_thread::handle_cmdu_control_ieee1905_1_message(Socket *sd,
+                                                            ieee1905_1::CmduMessageRx &cmdu_rx)
+{
+    auto cmdu_message_type = cmdu_rx.getMessageType();
+
+    if (!sd) {
+        LOG(ERROR) << "Socket error";
+        return false;
+    }
+
+    switch (cmdu_message_type) {
+    case ieee1905_1::eMessageType::AP_METRICS_QUERY_MESSAGE:
+        return handle_ap_metrics_query(*sd, cmdu_rx);
+    default:
+        LOG(ERROR) << "Unknown CMDU message type: " << std::hex << int(cmdu_message_type);
+        return false;
+    }
+}
+
 bool monitor_thread::handle_cmdu(Socket *sd, ieee1905_1::CmduMessageRx &cmdu_rx)
 {
     auto beerocks_header = message_com::parse_intel_vs_message(cmdu_rx);
     if (beerocks_header == nullptr) {
-        LOG(ERROR) << "Not a vendor specific message";
-        return false;
+        LOG(DEBUG) << "Received IEEE 1905.1 message";
+        handle_cmdu_control_ieee1905_1_message(sd, cmdu_rx);
     }
 
     if (beerocks_header->action() != beerocks_message::ACTION_MONITOR) {
