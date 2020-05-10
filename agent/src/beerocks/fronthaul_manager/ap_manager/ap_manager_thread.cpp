@@ -91,12 +91,13 @@ static void copy_vaps_info(std::shared_ptr<bwl::ap_wlan_hal> &ap_wlan_hal,
 using namespace beerocks;
 using namespace son;
 
-ap_manager_thread::ap_manager_thread(std::string slave_uds_)
-    : socket_thread(), bss_steer_valid_int(BSS_STEER_VALID_INT),
-      bss_steer_imminent_valid_int(BSS_STEER_IMMINENT_VALID_INT)
+ap_manager_thread::ap_manager_thread(const std::string &slave_uds_, const std::string &iface,
+                                     beerocks::logging &logger)
+    : socket_thread(), m_logger(logger)
 {
     thread_name = "ap_manager";
     slave_uds   = slave_uds_;
+    m_iface     = iface;
     set_select_timeout(SELECT_TIMEOUT_MSC);
 }
 
