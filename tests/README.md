@@ -50,6 +50,7 @@ The test environment prepares these before the tests are started.
 
 ## Description of tests
 
+TODO: translate this presentation into markdown format (.md)
 [Setup](https://docs.google.com/presentation/d/1F8TLcvl_mHGKWm-gqeGGB0qblWLSgzG97RpX8C3SSYM/edit?usp=sharing)
 
 ### ap_config_renew
