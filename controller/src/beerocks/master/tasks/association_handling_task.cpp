@@ -108,12 +108,10 @@ void association_handling_task::work()
         request->params().ipv4 = network_utils::ipv4_from_string(database.get_node_ipv4(sta_mac));
         request->params().channel = database.get_node_channel(sta_mac);
         request->params().vap_id  = database.get_node_vap_id(sta_mac);
-        request->params().is_ire  = false;
 
         //add bridge mac for ires
         if (database.get_node_type(sta_mac) == beerocks::TYPE_IRE_BACKHAUL) {
-            request->params().is_ire = true;
-            auto bridge_container    = database.get_node_children(sta_mac, beerocks::TYPE_IRE);
+            auto bridge_container = database.get_node_children(sta_mac, beerocks::TYPE_IRE);
             if (!bridge_container.empty()) {
                 std::string bridge_4addr_mac = *bridge_container.begin();
                 request->params().bridge_4addr_mac =
