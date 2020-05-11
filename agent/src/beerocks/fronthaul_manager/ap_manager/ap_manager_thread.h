@@ -30,16 +30,7 @@ public:
 
     virtual bool init() override;
 
-    struct ap_manager_conf_t {
-        std::string hostap_iface;
-        beerocks::eIfaceType hostap_iface_type;
-        int channel;
-        bool iface_filter_low;
-    };
-
     enum class eApManagerState { INIT, WAIT_FOR_CONFIGURATION, ATTACHING, ATTACHED, OPERATIONAL };
-
-    void ap_manager_config(ap_manager_conf_t &conf);
 
     /**
      * disallowed client parameters
@@ -80,6 +71,7 @@ private:
     bool handle_ap_enabled(int vap_id);
     void fill_cs_params(beerocks_message::sApChannelSwitch &params);
     void stop_ap_manager_thread();
+    bool create_ap_wlan_hal();
     void connect_to_agent();
     void send_heartbeat();
     void send_steering_return_status(beerocks_message::eActionOp_APMANAGER ActionOp,
@@ -94,7 +86,9 @@ private:
     std::string slave_uds;
     std::string m_iface;
     beerocks::logging &m_logger;
+    bool m_ap_manager_configured = false;
     uint8_t wifi_channel;
+    uint8_t m_iface_type;
     bool acs_enabled;
     bool low_filter;
 
