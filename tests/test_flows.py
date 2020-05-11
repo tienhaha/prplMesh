@@ -553,32 +553,99 @@ class TestFlows:
         self.check_log(env.controller, "Received TLV_RECEIVER_LINK_METRIC")
 
     def test_combined_infra_metrics(self):
+
+        self.send_and_check_policy_config_metric_reporting(env.agents[0], True, False)
+
         debug("Send AP Metrics query message to agent 1")
         vap1 = env.agents[0].radios[0].vaps[0]
         vap2 = env.agents[1].radios[1].vaps[0]
-        env.controller.dev_send_1905(env.agents[0].mac, 0x800B,
-                                     tlv(0x93, 0x0007, "0x01 {%s}" % (vap1.bssid)))
-        self.check_log(env.controller, "Received AP_METRICS_RESPONSE_MESSAGE")
+        mid = env.controller.dev_send_1905(env.agents[0].mac, 0x800B,
+                                           tlv(0x93, 0x0007, "0x01 {%s}" % (vap1.bssid)))
+
+        time.sleep(1)
+        response = self.check_cmdu_type_single("AP metrics response", 0x800C, env.agents[0].mac,
+                                               env.controller.mac, mid)
+        debug("Check AP metrics response has AP metrics")
+        ap_metrics_1 = self.check_cmdu_has_tlv_single(response, 0x94)
+        # TODO currently STA link metrics are missing
+        # debug("Check AP metrics response has STA link metrics")
+        # sta_metrics_1 = self.check_cmdu_has_tlv_single(response, 0x96)
+
+        self.send_and_check_policy_config_metric_reporting(env.agents[1], False, True)
 
         debug("Send AP Metrics query message to agent 2")
-        env.controller.dev_send_1905(env.agents[1].mac, 0x800B,
-                                     tlv(0x93, 0x0007, "0x01 {%s}" % vap2.bssid))
-        self.check_log(env.controller, "Received AP_METRICS_RESPONSE_MESSAGE")
+        mid = env.controller.dev_send_1905(env.agents[1].mac, 0x800B,
+                                           tlv(0x93, 0x0007, "0x01 {%s}" % vap2.bssid))
+
+        time.sleep(1)
+        response = self.check_cmdu_type_single("AP metrics response", 0x800C, env.agents[1].mac,
+                                               env.controller.mac, mid)
+        debug("Check AP metrics response has AP metrics")
+        ap_metrics_2 = self.check_cmdu_has_tlv_single(response, 0x94)
+        # TODO currently STA traffic stats are missing
+        # debug("Check AP metrics response has STA traffic stats")
+        # sta_traffic_stats_2 = self.check_cmdu_has_tlv_single(response, 0xa2)
 
         debug("Send 1905 Link metric query to agent 1 (neighbor gateway)")
-        env.controller.dev_send_1905(env.agents[0].mac, 0x0005,
-                                     tlv(0x08, 0x0008, "0x01 {%s} 0x02" % env.controller.mac))
-        self.check_log(env.agents[0], "Received LINK_METRIC_QUERY_MESSAGE")
-        self.check_log(env.controller, "Received LINK_METRIC_RESPONSE_MESSAGE")
-        self.check_log(env.controller, "Received TLV_TRANSMITTER_LINK_METRIC")
-        self.check_log(env.controller, "Received TLV_RECEIVER_LINK_METRIC")
+        mid = env.controller.dev_send_1905(env.agents[0].mac, 0x0005,
+                                           tlv(0x08, 0x0008, "0x01 {%s} 0x02" % env.controller.mac))
+        time.sleep(1)
+        response = self.check_cmdu_type_single("Link metrics response", 0x0006, env.agents[0].mac,
+                                               env.controller.mac, mid)
+        # We requested specific neighbour, so only one transmitter and receiver link metrics TLV
+        debug("Check link metrics response has transmitter link metrics")
+        tx_metrics_1 = self.check_cmdu_has_tlv_single(response, 9)
+        debug("Check link metrics response has receiver link metrics")
+        rx_metrics_1 = self.check_cmdu_has_tlv_single(response, 10)
 
         # Trigger combined infra metrics
         debug("Send Combined infrastructure metrics message to agent 1")
-        env.controller.dev_send_1905(env.agents[0].mac, 0x8013)
-        self.check_log(env.agents[0], "Received COMBINED_INFRASTRUCTURE_METRICS")
-        self.check_log(env.agents[0], "Received TLV_TRANSMITTER_LINK_METRIC")
-        self.check_log(env.agents[0], "Received TLV_RECEIVER_LINK_METRIC")
+        mid = env.controller.dev_send_1905(env.agents[0].mac, 0x8013)
+
+        time.sleep(1)
+        combined_infra_metrics = self.check_cmdu_type_single("Combined infra metrics", 0x8013,
+                                                             env.controller.mac, env.agents[0].mac,
+                                                             mid)
+
+        def check_tlv_equal(combined, expected, msg):
+            if combined != expected:
+                self.fail("Combined {} not equal to individual one".format(msg))
+                debug(" Individual: {}".format(expected))
+                debug(" Combined: {}".format(combined))
+
+        debug("Check Combined infra metrics has AP metrics")
+        ap_metrics_combined = self.check_cmdu_has_tlvs(combined_infra_metrics, 0x94)
+        if len(ap_metrics_combined) != 2:
+            # TODO currently only one ap_metrics is included
+            # self.fail("Combined metrics has {} != 2 AP metrics".format(len(ap_metrics_combined)))
+            debug("Combined: {}".format(ap_metrics_combined))
+            debug("AP metrics 1: {}".format(ap_metrics_1))
+            debug("AP metrics 2: {}".format(ap_metrics_2))
+        else:
+            combined_1, combined_2 = ap_metrics_combined
+            if combined_1 == ap_metrics_1:
+                check_tlv_equal(combined_2, ap_metrics_2)
+            elif combined_2 == ap_metrics_1:
+                check_tlv_equal(combined_1, ap_metrics_2)
+            else:
+                self.fail("Combined metrics not identical to individual ones")
+                debug("Combined: {}".format(ap_metrics_combined))
+                debug("AP metrics 1: {}".format(ap_metrics_1))
+                debug("AP metrics 2: {}".format(ap_metrics_2))
+
+        def check_equal_tlv(tlv_type, expected, msg):
+            debug("Check Combined infra metrics has {}".format(msg))
+            combined = self.check_cmdu_has_tlv_single(combined_infra_metrics, tlv_type)
+            check_tlv_equal(combined, expected, msg)
+
+        # TODO currently STA link metrics are missing
+        # check_equal_tlv(0x96, sta_metrics_1, "STA link metrics")
+        # TODO currently STA traffic stats are missing
+        # check_equal_tlv(0xa2, sta_traffic_stats_2, "STA traffic stats")
+        check_equal_tlv(9, tx_metrics_1, "transmitter link metrics")
+        check_equal_tlv(10, rx_metrics_1, "receiver link metrics")
+
+        self.check_cmdu_type_single("ACK", 0x8000, env.agents[0].mac, env.controller.mac, mid)
 
     def test_client_capability_query(self):
         sta1 = env.Station.create()
