@@ -32,6 +32,7 @@
 #include <tlvf/wfa_map/tlvApMetricQuery.h>
 #include <tlvf/wfa_map/tlvApRadioBasicCapabilities.h>
 #include <tlvf/wfa_map/tlvApRadioIdentifier.h>
+#include <tlvf/wfa_map/tlvBeaconMetricsResponse.h>
 #include <tlvf/wfa_map/tlvChannelPreference.h>
 #include <tlvf/wfa_map/tlvChannelSelectionResponse.h>
 #include <tlvf/wfa_map/tlvClientAssociationControlRequest.h>
@@ -202,6 +203,9 @@ std::shared_ptr<BaseClass> CmduMessageRx::parseNextTlv()
     }
     case (149): {
         return msg.addClass<wfa_map::tlvStaMacAddressType>();
+    }
+    case (154): {
+        return msg.addClass<wfa_map::tlvBeaconMetricsResponse>();
     }
     case (155): {
         return msg.addClass<wfa_map::tlvSteeringRequest>();
