@@ -10,7 +10,6 @@
 
 #include <bcl/network/network_utils.h>
 #include <bcl/son/son_wireless_utils.h>
-#include <easylogging++.h>
 
 using namespace son;
 using namespace beerocks;

@@ -10,7 +10,6 @@
 
 #include <bcl/beerocks_utils.h>
 #include <bcl/network/network_utils.h>
-#include <easylogging++.h>
 
 #include <beerocks/tlvf/beerocks_message.h>
 #include <beerocks/tlvf/beerocks_message_monitor.h>
