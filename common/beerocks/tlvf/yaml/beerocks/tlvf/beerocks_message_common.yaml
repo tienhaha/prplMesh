@@ -153,7 +153,6 @@ sClientMonitoringParams:
   ipv4: beerocks::net::sIpv4Addr
   channel: uint8_t 
   vap_id: int8_t
-  is_ire: uint8_t 
 
 sConfigVapInfo:
   _type: struct
