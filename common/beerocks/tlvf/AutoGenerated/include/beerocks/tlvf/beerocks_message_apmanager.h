@@ -21,6 +21,7 @@
 #include <tlvf/BaseClass.h>
 #include <tlvf/ClassList.h>
 #include <tuple>
+#include <tlvf/tlvfutils.h>
 #include <vector>
 #include "beerocks/tlvf/beerocks_message_common.h"
 #include "tlvf/WSC/WSC_Attributes.h"
@@ -28,18 +29,22 @@
 namespace beerocks_message {
 
 
-class cACTION_APMANAGER_4ADDR_STA_JOINED : public BaseClass
+class cACTION_APMANAGER_UP_NOTIFICATION : public BaseClass
 {
     public:
-        cACTION_APMANAGER_4ADDR_STA_JOINED(uint8_t* buff, size_t buff_len, bool parse = false);
-        explicit cACTION_APMANAGER_4ADDR_STA_JOINED(std::shared_ptr<BaseClass> base, bool parse = false);
-        ~cACTION_APMANAGER_4ADDR_STA_JOINED();
+        cACTION_APMANAGER_UP_NOTIFICATION(uint8_t* buff, size_t buff_len, bool parse = false);
+        explicit cACTION_APMANAGER_UP_NOTIFICATION(std::shared_ptr<BaseClass> base, bool parse = false);
+        ~cACTION_APMANAGER_UP_NOTIFICATION();
 
         static eActionOp_APMANAGER get_action_op(){
-            return (eActionOp_APMANAGER)(ACTION_APMANAGER_4ADDR_STA_JOINED);
+            return (eActionOp_APMANAGER)(ACTION_APMANAGER_UP_NOTIFICATION);
         }
-        sMacAddr& src_mac();
-        sMacAddr& dst_mac();
+        uint8_t& iface_name_length();
+        std::string iface_name_str();
+        char* iface_name(size_t length = 0);
+        bool set_iface_name(const std::string& str);
+        bool set_iface_name(const char buffer[], size_t size);
+        bool alloc_iface_name(size_t count = 1);
         void class_swap() override;
         bool finalize() override;
         static size_t get_initial_size();
@@ -47,8 +52,35 @@ class cACTION_APMANAGER_4ADDR_STA_JOINED : public BaseClass
     private:
         bool init();
         eActionOp_APMANAGER* m_action_op = nullptr;
-        sMacAddr* m_src_mac = nullptr;
-        sMacAddr* m_dst_mac = nullptr;
+        uint8_t* m_iface_name_length = nullptr;
+        char* m_iface_name = nullptr;
+        size_t m_iface_name_idx__ = 0;
+        int m_lock_order_counter__ = 0;
+};
+
+class cACTION_APMANAGER_CONFIGURE : public BaseClass
+{
+    public:
+        cACTION_APMANAGER_CONFIGURE(uint8_t* buff, size_t buff_len, bool parse = false);
+        explicit cACTION_APMANAGER_CONFIGURE(std::shared_ptr<BaseClass> base, bool parse = false);
+        ~cACTION_APMANAGER_CONFIGURE();
+
+        static eActionOp_APMANAGER get_action_op(){
+            return (eActionOp_APMANAGER)(ACTION_APMANAGER_CONFIGURE);
+        }
+        beerocks::eIfaceType& iface_type();
+        uint8_t& channel();
+        uint8_t& iface_filter_low();
+        void class_swap() override;
+        bool finalize() override;
+        static size_t get_initial_size();
+
+    private:
+        bool init();
+        eActionOp_APMANAGER* m_action_op = nullptr;
+        beerocks::eIfaceType* m_iface_type = nullptr;
+        uint8_t* m_channel = nullptr;
+        uint8_t* m_iface_filter_low = nullptr;
 };
 
 class cACTION_APMANAGER_JOINED_NOTIFICATION : public BaseClass
@@ -125,25 +157,6 @@ class cACTION_APMANAGER_ENABLE_APS_RESPONSE : public BaseClass
         bool init();
         eActionOp_APMANAGER* m_action_op = nullptr;
         uint8_t* m_success = nullptr;
-};
-
-class cACTION_APMANAGER_INIT_DONE_NOTIFICATION : public BaseClass
-{
-    public:
-        cACTION_APMANAGER_INIT_DONE_NOTIFICATION(uint8_t* buff, size_t buff_len, bool parse = false);
-        explicit cACTION_APMANAGER_INIT_DONE_NOTIFICATION(std::shared_ptr<BaseClass> base, bool parse = false);
-        ~cACTION_APMANAGER_INIT_DONE_NOTIFICATION();
-
-        static eActionOp_APMANAGER get_action_op(){
-            return (eActionOp_APMANAGER)(ACTION_APMANAGER_INIT_DONE_NOTIFICATION);
-        }
-        void class_swap() override;
-        bool finalize() override;
-        static size_t get_initial_size();
-
-    private:
-        bool init();
-        eActionOp_APMANAGER* m_action_op = nullptr;
 };
 
 class cACTION_APMANAGER_HOSTAP_SET_RESTRICTED_FAILSAFE_CHANNEL_REQUEST : public BaseClass
@@ -724,27 +737,6 @@ class cACTION_APMANAGER_CLIENT_RX_RSSI_MEASUREMENT_RESPONSE : public BaseClass
         bool init();
         eActionOp_APMANAGER* m_action_op = nullptr;
         sNodeRssiMeasurement* m_params = nullptr;
-};
-
-class cACTION_APMANAGER_CLIENT_IRE_CONNECTED_NOTIFICATION : public BaseClass
-{
-    public:
-        cACTION_APMANAGER_CLIENT_IRE_CONNECTED_NOTIFICATION(uint8_t* buff, size_t buff_len, bool parse = false);
-        explicit cACTION_APMANAGER_CLIENT_IRE_CONNECTED_NOTIFICATION(std::shared_ptr<BaseClass> base, bool parse = false);
-        ~cACTION_APMANAGER_CLIENT_IRE_CONNECTED_NOTIFICATION();
-
-        static eActionOp_APMANAGER get_action_op(){
-            return (eActionOp_APMANAGER)(ACTION_APMANAGER_CLIENT_IRE_CONNECTED_NOTIFICATION);
-        }
-        sMacAddr& mac();
-        void class_swap() override;
-        bool finalize() override;
-        static size_t get_initial_size();
-
-    private:
-        bool init();
-        eActionOp_APMANAGER* m_action_op = nullptr;
-        sMacAddr* m_mac = nullptr;
 };
 
 class cACTION_APMANAGER_ACK : public BaseClass
