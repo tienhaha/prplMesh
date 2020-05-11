@@ -206,17 +206,6 @@ bool monitor_thread::init()
         return false;
     }
 
-    auto request =
-        message_com::create_vs_message<beerocks_message::cACTION_MONITOR_JOINED_NOTIFICATION>(
-            cmdu_tx);
-
-    if (request == nullptr) {
-        LOG(ERROR) << "Failed building message!";
-        return false;
-    }
-
-    message_com::send_cmdu(slave_socket, cmdu_tx);
-
     add_socket(slave_socket);
     LOG(DEBUG) << "init() end";
     return true;
@@ -343,6 +332,17 @@ void monitor_thread::after_select(bool timeout)
             stop_monitor_thread();
             return;
         }
+
+        auto request =
+            message_com::create_vs_message<beerocks_message::cACTION_MONITOR_JOINED_NOTIFICATION>(
+                cmdu_tx);
+
+        if (request == nullptr) {
+            LOG(ERROR) << "Failed building message!";
+            return;
+        }
+
+        message_com::send_cmdu(slave_socket, cmdu_tx);
 
         // HAL is attached and operational
     } else {
