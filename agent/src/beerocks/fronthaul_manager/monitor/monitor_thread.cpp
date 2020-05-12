@@ -215,6 +215,11 @@ bool monitor_thread::init()
 
 void monitor_thread::after_select(bool timeout)
 {
+    if (!m_logger_configured) {
+        logger.attach_current_thread_to_logger_id();
+        m_logger_configured = true;
+    }
+
     // Continue only if slave is connected
     if (slave_socket == nullptr) {
         LOG(DEBUG) << "slave_socket == nullptr";

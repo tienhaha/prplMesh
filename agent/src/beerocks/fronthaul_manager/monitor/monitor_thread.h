@@ -94,6 +94,7 @@ private:
     Socket *mon_hal_int_events = nullptr;
     Socket *mon_hal_nl_events  = nullptr;
     beerocks::logging &logger;
+    bool m_logger_configured = false;
 
     typedef struct {
         std::string sta_mac;
