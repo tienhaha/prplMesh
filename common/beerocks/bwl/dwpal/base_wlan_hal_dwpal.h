@@ -48,6 +48,18 @@ public:
     virtual bool process_nl_events() override;
     virtual std::string get_radio_mac() override;
 
+    /**
+     * @brief Gets channel utilization.
+     *
+     * Gets survey information from channel through NL80211 and computes channel utilization as
+     * time busy divided by time on.
+     *
+     * @param[out] channel_utilization Channel utilization value.
+     *
+     * @return True on success and false otherwise.
+     */
+    bool get_channel_utilization(uint8_t &channel_utilization) override;
+
     // Protected methods
 protected:
     base_wlan_hal_dwpal(HALType type, const std::string &iface_name, hal_event_cb_t callback,

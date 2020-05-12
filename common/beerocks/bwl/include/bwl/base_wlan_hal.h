@@ -110,6 +110,15 @@ public:
      */
     virtual bool process_int_events();
 
+    /**
+     * @brief Gets channel utilization.
+     *
+     * @param[out] channel_utilization Channel utilization value.
+     *
+     * @return True on success and false otherwise.
+     */
+    virtual bool get_channel_utilization(uint8_t &channel_utilization) = 0;
+
     // Public getter methods:
 public:
     /*!
