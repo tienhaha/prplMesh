@@ -21,6 +21,7 @@ run_cppcheck() {
              --force \
              --error-exitcode=1 \
              --enable=warning,style,information \
+             --suppressions-list="$rootdir"/tools/docker/static-analysis/suppressions.txt \
              -rp="$rootdir" \
              -j"$(nproc)" \
              -q \
