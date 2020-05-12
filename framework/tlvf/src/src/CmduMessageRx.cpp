@@ -33,6 +33,8 @@
 #include <tlvf/wfa_map/tlvApMetrics.h>
 #include <tlvf/wfa_map/tlvApRadioBasicCapabilities.h>
 #include <tlvf/wfa_map/tlvApRadioIdentifier.h>
+#include <tlvf/wfa_map/tlvAssociatedStaLinkMetrics.h>
+#include <tlvf/wfa_map/tlvAssociatedStaTrafficStats.h>
 #include <tlvf/wfa_map/tlvChannelPreference.h>
 #include <tlvf/wfa_map/tlvChannelSelectionResponse.h>
 #include <tlvf/wfa_map/tlvClientAssociationControlRequest.h>
@@ -208,6 +210,9 @@ std::shared_ptr<BaseClass> CmduMessageRx::parseNextTlv()
     case (149): {
         return msg.addClass<wfa_map::tlvStaMacAddressType>();
     }
+    case (150): {
+        return msg.addClass<wfa_map::tlvAssociatedStaLinkMetrics>();
+    }
     case (155): {
         return msg.addClass<wfa_map::tlvSteeringRequest>();
     }
@@ -222,6 +227,9 @@ std::shared_ptr<BaseClass> CmduMessageRx::parseNextTlv()
     }
     case (161): {
         return msg.addClass<wfa_map::tlvApCapability>();
+    }
+    case (162): {
+        return msg.addClass<wfa_map::tlvAssociatedStaTrafficStats>();
     }
     default: {
         LOG(DEBUG) << "Unknown TLV type: " << tlv_type;
