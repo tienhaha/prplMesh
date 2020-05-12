@@ -840,17 +840,21 @@ e1 09 00 bf 0c b0 79 d1 33 fa ff 0c 03 fa ff 0c
         debug("Connect dummy STA (" + sta.mac + ") to wlan0")
         env.agents[0].radios[0].vaps[0].associate(sta)
 
-        # send beacon query request (please take a look at https://github.com/prplfoundation/prplMesh/issues/1272)
+        # send beacon query request
+        # (please take a look at https://github.com/prplfoundation/prplMesh/issues/1272)
         debug("Sending beacon report query to repeater:")
         request = '{mac} 0x73 0xFFFFFFFFFFFF 0x02 0x00 0x01 0x03 0x73 0x24 0x30'.format(mac=sta.mac)
         debug(request)
         mid = env.controller.dev_send_1905(env.agents[0].mac, 0x8011,
-                                     tlv(0x99, 0x0014, "{" + request + "}"))
+                                           tlv(0x99, 0x0014, "{" + request + "}"))
 
-        self.check_log(env.agents[0], r"BEACON METRICS QUERY: sending ACK message to the originator mid: {:d}".format(mid))
+        self.check_log(env.agents[0],
+                       r"BEACON METRICS QUERY: "
+                       r"sending ACK message to the originator mid: {:d}".format(mid))
 
         # this line is printed in the monitor log - however currently there is no way to test it -
-        # self.check_log(env.agents[0].radios[0].???, r"inserting 1 RRM_EVENT_BEACON_REP_RXED event(s) to the pending list")
+        # self.check_log(env.agents[0].radios[0].???,
+        #                r"inserting 1 RRM_EVENT_BEACON_REP_RXED event(s) to the pending list")
 
 
 if __name__ == '__main__':
@@ -887,4 +891,3 @@ if __name__ == '__main__':
 
     if t.run_tests(options.tests):
         sys.exit(1)
-
