@@ -296,7 +296,7 @@ public:
          * Last value reported for AP Metrics Channel Utilization Reporting.
          * Must be compared with threshold value to decide if current value has to be reported.
          */
-        uint8_t ap_metrics_channel_utilization_reporting_value = 0;
+        uint8_t ap_metrics_channel_utilization_reporting_value = UINT8_MAX;
 
         /**
          * Time point at which channel utilization was reported for the last time.
