@@ -1422,6 +1422,11 @@ bool monitor_thread::handle_ap_metrics_query(Socket &sd, ieee1905_1::CmduMessage
         return false;
     }
 
+    if (!mon_db.get_sta_count()) {
+        LOG(WARNING) << "STA is not connected. Response will be built without Associated STA "
+                        "Traffic Stats and  Associated STA Link Metrics";
+    }
+
     for (size_t bssid_idx = 0; bssid_idx < ap_metric_query_tlv->bssid_list_length(); bssid_idx++) {
         auto bssid_tuple = ap_metric_query_tlv->bssid_list(bssid_idx);
         if (!std::get<0>(bssid_tuple)) {
@@ -1435,17 +1440,53 @@ bool monitor_thread::handle_ap_metrics_query(Socket &sd, ieee1905_1::CmduMessage
             return false;
         }
 
-        //TODO: find the way how to check policy config was enabled or not
-        //if (policy config) {
-        //    auto tlv1 = mdu_tx.addClass<wfa_map::tlv>(); //STA tlvAssociatedStaLinkMetrics
-        //
-        //    //TODO add tlvTrafficStats
-        //}
+        auto include_sta_traffic_stats_tlv =
+            mon_db.get_radio_node()
+                ->ap_metrics_reporting_info()
+                .include_associated_sta_traffic_stats_tlv_in_ap_metrics_response;
+
+        if (include_sta_traffic_stats_tlv) {
+            LOG(DEBUG) << "Enabled Associated STA Traffic Stats in the AP Metrics Response";
+            for (auto it = mon_db.sta_begin(); it != mon_db.sta_end(); it++) {
+                auto sta_mac  = it->first;
+                auto sta_node = it->second;
+
+                if (sta_node == nullptr) {
+                    LOG(WARNING) << "Invalid node pointer for STA = " << sta_mac;
+                    continue;
+                }
+                LOG(DEBUG) << "Create sta_traffic_stat tlv";
+                if (!mon_stats.add_ap_assoc_sta_traffic_stat(cmdu_tx, *sta_node)) {
+                    LOG(ERROR) << "Failed to add sta_traffic_stat tlv";
+                }
+            }
+
+            auto include_sta_link_metrics_tlv =
+                mon_db.get_radio_node()
+                    ->ap_metrics_reporting_info()
+                    .include_associated_sta_link_metrics_tlv_in_ap_metrics_response;
+
+            if (include_sta_link_metrics_tlv) {
+                LOG(DEBUG) << "Enabled Associated STA Link Metrics in the AP Metrics Response";
+                for (auto it = mon_db.sta_begin(); it != mon_db.sta_end(); it++) {
+                    auto sta_mac  = it->first;
+                    auto sta_node = it->second;
+
+                    if (sta_node == nullptr) {
+                        LOG(WARNING) << "Invalid node pointer for STA = " << sta_mac;
+                        continue;
+                    }
+                    LOG(DEBUG) << "Create sta_link_metric tlv";
+                    if (!mon_stats.add_ap_assoc_sta_link_metric(cmdu_tx, bssid, *sta_node)) {
+                        LOG(ERROR) << "Failed to add sta_link_metric tlv";
+                    }
+                }
+            }
+        }
     }
 
     LOG(DEBUG) << "Sending AP_METRICS_RESPONSE_MESSAGE to slave_socket, mid=" << std::hex
                << int(mid);
-
     return message_com::send_cmdu(slave_socket, cmdu_tx);
 }
 

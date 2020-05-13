@@ -71,7 +71,7 @@
 #include <tlvf/wfa_map/tlvApRadioBasicCapabilities.h>
 #include <tlvf/wfa_map/tlvApVhtCapabilities.h>
 #include <tlvf/wfa_map/tlvAssociatedClients.h>
-#include <tlvf/wfa_map/tlvAssociatedStaLinkMetrics.h>
+#include <tlvf/wfa_map/tlvAssociatedStaTrafficStats.h>
 #include <tlvf/wfa_map/tlvClientCapabilityReport.h>
 #include <tlvf/wfa_map/tlvClientInfo.h>
 #include <tlvf/wfa_map/tlvErrorCode.h>
@@ -2438,7 +2438,6 @@ bool backhaul_manager::handle_ap_metrics_query(ieee1905_1::CmduMessageRx &cmdu_r
                                                const std::string &src_mac)
 {
     std::vector<sMacAddr> bssid;
-<<<<<<< HEAD
     const auto mid           = cmdu_rx.getMessageId();
     auto ap_metric_query_tlv = cmdu_rx.getClass<wfa_map::tlvApMetricQuery>();
     if (!ap_metric_query_tlv) {
@@ -2447,16 +2446,6 @@ bool backhaul_manager::handle_ap_metrics_query(ieee1905_1::CmduMessageRx &cmdu_r
     }
     for (size_t bssid_idx = 0; bssid_idx < ap_metric_query_tlv->bssid_list_length(); bssid_idx++) {
         auto bssid_tuple = ap_metric_query_tlv->bssid_list(bssid_idx);
-=======
-    const auto mid            = cmdu_rx.getMessageId();
-    auto ap_metrics_query_tlv = cmdu_rx.getClass<wfa_map::tlvApMetricQuery>();
-    if (!ap_metrics_query_tlv) {
-        LOG(ERROR) << "AP Metrics Query CMDU mid=" << mid << " does not have AP Metric Query TLV";
-        return false;
-    }
-    for (size_t bssid_idx = 0; bssid_idx < ap_metrics_query_tlv->bssid_list_length(); bssid_idx++) {
-        auto bssid_tuple = ap_metrics_query_tlv->bssid_list(bssid_idx);
->>>>>>> agent: backhaul_manager: Implement AP Metrics Query/Response message
         if (!std::get<0>(bssid_tuple)) {
             LOG(ERROR) << "Failed to get bssid " << bssid_idx << " from AP_METRICS_QUERY";
             return false;
@@ -2468,11 +2457,7 @@ bool backhaul_manager::handle_ap_metrics_query(ieee1905_1::CmduMessageRx &cmdu_r
 
     auto ret = false;
     for (auto socket : slaves_sockets) {
-<<<<<<< HEAD
         for (const auto &mac : bssid) {
-=======
-        for (auto mac : bssid) {
->>>>>>> agent: backhaul_manager: Implement AP Metrics Query/Response message
             int i = 0;
             if (mac == socket->vaps_list.vaps[i].mac) {
                 LOG(DEBUG) << "Forwarding AP_METRICS_QUERY_MESSAGE message to son_slave, bssid: "
@@ -2482,27 +2467,18 @@ bool backhaul_manager::handle_ap_metrics_query(ieee1905_1::CmduMessageRx &cmdu_r
                     cmdu_tx.create(mid, ieee1905_1::eMessageType::AP_METRICS_QUERY_MESSAGE);
                 if (!forward) {
                     LOG(ERROR) << "Failed to create AP_METRICS_QUERY_MESSAGE";
-<<<<<<< HEAD
                     return false;
-=======
->>>>>>> agent: backhaul_manager: Implement AP Metrics Query/Response message
                 }
 
                 auto query = cmdu_tx.addClass<wfa_map::tlvApMetricQuery>();
                 if (!query) {
                     LOG(ERROR) << "Failed addClass<wfa_map::tlvApMetricQuery>";
-<<<<<<< HEAD
                     return false;
-=======
->>>>>>> agent: backhaul_manager: Implement AP Metrics Query/Response message
                 }
 
                 if (!query->alloc_bssid_list(1)) {
                     LOG(ERROR) << "Failed allocate memory for bssid_list";
-<<<<<<< HEAD
                     return false;
-=======
->>>>>>> agent: backhaul_manager: Implement AP Metrics Query/Response message
                 }
 
                 auto list         = query->bssid_list(0);
@@ -2531,23 +2507,14 @@ bool backhaul_manager::handle_slave_ap_metrics_response(ieee1905_1::CmduMessageR
     const auto mid = cmdu_rx.getMessageId();
     LOG(DEBUG) << "Received AP_METRICS_RESPONSE_MESSAGE, mid=" << std::hex << int(mid);
 
-<<<<<<< HEAD
     auto ap_metrics_tlv = cmdu_rx.getClass<wfa_map::tlvApMetrics>();
     if (!ap_metrics_tlv) {
-=======
-    auto ap_metric_tlv = cmdu_rx.getClass<wfa_map::tlvApMetrics>();
-    if (!ap_metric_tlv) {
->>>>>>> agent: backhaul_manager: Implement AP Metrics Query/Response message
         LOG(ERROR) << "Failed cmdu_rx.getClass<wfa_map::tlvApMetrics>(), mid=" << std::hex
                    << int(mid);
         return false;
     }
 
-<<<<<<< HEAD
     auto bssid_tlv = ap_metrics_tlv->bssid();
-=======
-    auto bssid_tlv = ap_metric_tlv->bssid();
->>>>>>> agent: backhaul_manager: Implement AP Metrics Query/Response message
     auto mac       = std::find_if(
         m_ap_metric_query.begin(), m_ap_metric_query.end(),
         [&bssid_tlv](sApMetricsQuery const &query) { return query.bssid == bssid_tlv; });
@@ -2560,7 +2527,6 @@ bool backhaul_manager::handle_slave_ap_metrics_response(ieee1905_1::CmduMessageR
 
     sApMetrics metric;
     // Copy data to the response vector
-<<<<<<< HEAD
     metric.bssid               = ap_metrics_tlv->bssid();
     metric.channel_utilization = ap_metrics_tlv->channel_utilization();
     metric.number_of_stas_currently_associated =
@@ -2569,22 +2535,40 @@ bool backhaul_manager::handle_slave_ap_metrics_response(ieee1905_1::CmduMessageR
     auto info                           = ap_metrics_tlv->estimated_service_info_field();
     if (ap_metrics_tlv->estimated_service_info_field_length()) {
         for (size_t i = 0; i < ap_metrics_tlv->estimated_service_info_field_length(); i++) {
-=======
-    metric.bssid               = ap_metric_tlv->bssid();
-    metric.channel_utilization = ap_metric_tlv->channel_utilization();
-    metric.number_of_stas_currently_associated =
-        ap_metric_tlv->number_of_stas_currently_associated();
-    metric.estimated_service_parameters = ap_metric_tlv->estimated_service_parameters();
-    auto info                           = ap_metric_tlv->estimated_service_info_field();
-    if (ap_metric_tlv->estimated_service_info_field_length()) {
-        for (size_t i = 0; i < ap_metric_tlv->estimated_service_info_field_length(); i++) {
->>>>>>> agent: backhaul_manager: Implement AP Metrics Query/Response message
             metric.estimated_service_info_field.push_back(info[i]);
         }
     }
+    std::vector<sStaTrafficStats> traffic_stats_response;
+
+    for (auto &sta_traffic : cmdu_rx.getClassList<wfa_map::tlvAssociatedStaTrafficStats>()) {
+        if (!sta_traffic) {
+            LOG(ERROR) << "Failed to get class list for tlvAssociatedStaTrafficStats";
+            continue;
+        }
+
+        traffic_stats_response.push_back(
+            {sta_traffic->sta_mac(), sta_traffic->byte_sent(), sta_traffic->byte_recived(),
+             sta_traffic->packets_sent(), sta_traffic->packets_recived(),
+             sta_traffic->tx_packets_error(), sta_traffic->rx_packets_error(),
+             sta_traffic->retransmission_count()});
+    }
+
+    std::vector<sStaApLinkMetrics> link_metrics_response;
+    for (auto &sta_link_metric : cmdu_rx.getClassList<wfa_map::tlvAssociatedStaLinkMetrics>()) {
+        if (!sta_link_metric) {
+            LOG(ERROR) << "Failed getClassList<wfa_map::tlvAssociatedStaLinkMetrics>";
+            continue;
+        }
+        if (sta_link_metric->bssid_info_list_length() != 1) {
+            LOG(ERROR) << "sta_link_metric->bssid_info_list_length() should be equal to 1";
+            continue;
+        }
+        auto response_list = sta_link_metric->bssid_info_list(0);
+        link_metrics_response.push_back({sta_link_metric->sta_mac(), std::get<1>(response_list)});
+    }
 
     // Fill a response vector
-    m_ap_metric_response.push_back({metric});
+    m_ap_metric_response.push_back({metric, traffic_stats_response, link_metrics_response});
 
     // Remove an entry from the processed query
     m_ap_metric_query.erase(
@@ -2627,10 +2611,50 @@ bool backhaul_manager::handle_slave_ap_metrics_response(ieee1905_1::CmduMessageR
         std::copy_n(response.metric.estimated_service_info_field.begin(),
                     response.metric.estimated_service_info_field.size(),
                     ap_metrics_response_tlv->estimated_service_info_field());
+
+        for (auto &stat : response.sta_traffic_stats) {
+            auto sta_traffic_response_tlv =
+                cmdu_tx.addClass<wfa_map::tlvAssociatedStaTrafficStats>();
+
+            if (!sta_traffic_response_tlv) {
+                LOG(ERROR) << "Failed addClass<wfa_map::tlvAssociatedStaTrafficStats>";
+                continue;
+            }
+
+            sta_traffic_response_tlv->sta_mac()              = stat.sta_mac;
+            sta_traffic_response_tlv->byte_sent()            = stat.byte_sent;
+            sta_traffic_response_tlv->byte_recived()         = stat.byte_recived;
+            sta_traffic_response_tlv->packets_sent()         = stat.packets_sent;
+            sta_traffic_response_tlv->packets_recived()      = stat.packets_recived;
+            sta_traffic_response_tlv->tx_packets_error()     = stat.tx_packets_error;
+            sta_traffic_response_tlv->rx_packets_error()     = stat.rx_packets_error;
+            sta_traffic_response_tlv->retransmission_count() = stat.retransmission_count;
+        }
+
+        for (auto &link_metric : response.sta_link_metrics) {
+            auto sta_link_metric_response_tlv =
+                cmdu_tx.addClass<wfa_map::tlvAssociatedStaLinkMetrics>();
+
+            if (!sta_link_metric_response_tlv) {
+                LOG(ERROR) << "Failed addClass<wfa_map::tlvAssociatedStaLinkMetrics>";
+                continue;
+            }
+
+            sta_link_metric_response_tlv->sta_mac() = link_metric.sta_mac;
+            if (!sta_link_metric_response_tlv->alloc_bssid_info_list(1)) {
+                LOG(ERROR) << "Failed alloc_bssid_info_list";
+                continue;
+            }
+            auto &sta_link_metric_response =
+                std::get<1>(sta_link_metric_response_tlv->bssid_info_list(0));
+            sta_link_metric_response = link_metric.bssid_info;
+        }
     }
 
-    LOG(DEBUG) << "Sending AP_METRICS_RESPONSE_MESSAGE, mid=" << std::hex << int(mid);
+    // Clear the m_ap_metric_response vector after preparing response to the controller
+    m_ap_metric_response.clear();
 
+    LOG(DEBUG) << "Sending AP_METRICS_RESPONSE_MESSAGE, mid=" << std::hex << int(mid);
     return send_cmdu_to_bus(cmdu_tx, controller_bridge_mac, bridge_info.mac);
 }
 
