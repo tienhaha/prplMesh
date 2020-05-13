@@ -4572,6 +4572,7 @@ bool slave_thread::handle_monitor_ap_metrics_response(Socket &sd,
                << int(mid);
 
     uint16_t length = message_com::get_uds_header(cmdu_rx)->length;
+    LOG(DEBUG) << "AP_METRICS_RESPONSE_MESSAGE length: " << cmdu_rx.getMessageLength();
     cmdu_rx.swap(); // swap back before forwarding
     if (!message_com::forward_cmdu_to_uds(backhaul_manager_socket, cmdu_rx, length)) {
         LOG(ERROR) << "Failed sending AP_METRICS_RESPONSE_MESSAGE message to backhaul_manager";

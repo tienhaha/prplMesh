@@ -495,16 +495,17 @@ bool monitor_stats::add_ap_metrics(ieee1905_1::CmduMessageTx &cmdu_tx, const sMa
 }
 
 bool monitor_stats::add_ap_assoc_sta_traffic_stat(ieee1905_1::CmduMessageTx &cmdu_tx,
-                                                  monitor_sta_node *sta_node)
+                                                  monitor_sta_node &sta_node)
 {
     auto ap_assoc_sta_traffic_stat_tlv = cmdu_tx.addClass<wfa_map::tlvAssociatedStaTrafficStats>();
     if (!ap_assoc_sta_traffic_stat_tlv) {
         LOG(ERROR) << "Couldn't addClass tlvAssociatedStaTrafficStats";
         return false;
     }
-    auto stat                                = sta_node->get_stats().hal_stats;
-    ap_assoc_sta_traffic_stat_tlv->sta_mac() = network_utils::mac_from_string(sta_node->get_mac());
-    ap_assoc_sta_traffic_stat_tlv->byte_sent()       = stat.tx_bytes;
+    LOG(DEBUG) << "Filling up tlvAssociatedStaTrafficStats";
+    auto stat                                  = sta_node.get_stats().hal_stats;
+    ap_assoc_sta_traffic_stat_tlv->sta_mac()   = network_utils::mac_from_string(sta_node.get_mac());
+    ap_assoc_sta_traffic_stat_tlv->byte_sent() = stat.tx_bytes;
     ap_assoc_sta_traffic_stat_tlv->byte_recived()    = stat.rx_bytes;
     ap_assoc_sta_traffic_stat_tlv->packets_sent()    = stat.tx_packets;
     ap_assoc_sta_traffic_stat_tlv->packets_recived() = stat.rx_packets;
@@ -518,7 +519,7 @@ bool monitor_stats::add_ap_assoc_sta_traffic_stat(ieee1905_1::CmduMessageTx &cmd
 }
 
 bool monitor_stats::add_ap_assoc_sta_link_metric(ieee1905_1::CmduMessageTx &cmdu_tx,
-                                                 const sMacAddr &bssid, monitor_sta_node *sta_node)
+                                                 const sMacAddr &bssid, monitor_sta_node &sta_node)
 {
     auto ap_assoc_sta_link_metric_tlv = cmdu_tx.addClass<wfa_map::tlvAssociatedStaLinkMetrics>();
     if (!ap_assoc_sta_link_metric_tlv) {
@@ -526,19 +527,19 @@ bool monitor_stats::add_ap_assoc_sta_link_metric(ieee1905_1::CmduMessageTx &cmdu
         return false;
     }
 
-    ap_assoc_sta_link_metric_tlv->sta_mac() = network_utils::mac_from_string(sta_node->get_mac());
+    ap_assoc_sta_link_metric_tlv->sta_mac() = network_utils::mac_from_string(sta_node.get_mac());
 
     if (!ap_assoc_sta_link_metric_tlv->alloc_bssid_info_list(1)) {
         LOG(ERROR) << "Couldn't ap_assoc_sta_link_metric_tlv->alloc_bssid_info_list";
         return false;
     }
-    auto stat = sta_node->get_stats();
-
+    auto stat = sta_node.get_stats();
+    LOG(DEBUG) << "Filling up tlvAssociatedStaLinkMetrics";
     wfa_map::tlvAssociatedStaLinkMetrics::sBssidInfo info;
     info.bssid                                 = bssid;
-    info.downlink_estimated_mac_data_rate_mbps = stat.rx_phy_rate_100kb_avg * 10; // In Mbps
+    info.downlink_estimated_mac_data_rate_mbps = stat.rx_phy_rate_100kb_avg / 10; // In Mbps
     info.earliest_measurement_delta            = stat.delta_ms;
-    info.uplink_estimated_mac_data_rate_mbps   = stat.tx_phy_rate_100kb_avg * 10; // In Mbps
+    info.uplink_estimated_mac_data_rate_mbps   = stat.tx_phy_rate_100kb_avg / 10; // In Mbps
     info.sta_measured_uplink_rssi_dbm_enc      = stat.rx_rssi_curr;
 
     auto list         = ap_assoc_sta_link_metric_tlv->bssid_info_list(0);
