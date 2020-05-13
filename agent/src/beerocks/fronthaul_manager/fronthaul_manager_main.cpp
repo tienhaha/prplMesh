@@ -178,15 +178,19 @@ int main(int argc, char *argv[])
         }
     }
 
+    auto syslog = (beerocks_slave_conf.sLog.syslog_enabled == "true");
+
     // Init logger ap_manager
-    std::string base_ap_manager_name = std::string(BEEROCKS_AP_MANAGER) + "_" + fronthaul_iface;
+    std::string base_ap_manager_name =
+        std::string(syslog ? BEEROCKS_FRONTHAUL : BEEROCKS_AP_MANAGER) + "_" + fronthaul_iface;
     g_logger_ap_mananger = init_logger(base_ap_manager_name, beerocks_slave_conf.sLog, argc, argv);
     if (!g_logger_ap_mananger) {
         return 0;
     }
 
     // Init logger monitor
-    std::string base_monitor_name = std::string(BEEROCKS_MONITOR) + "_" + fronthaul_iface;
+    std::string base_monitor_name =
+        std::string(syslog ? BEEROCKS_FRONTHAUL : BEEROCKS_MONITOR) + "_" + fronthaul_iface;
     g_logger_monitor =
         init_logger(base_monitor_name, beerocks_slave_conf.sLog, argc, argv, BEEROCKS_MONITOR);
     if (!g_logger_monitor) {
