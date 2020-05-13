@@ -1917,7 +1917,10 @@ void son_management::handle_bml_message(Socket *sd,
             op_error_code == eChannelScanOpErrCode::CHANNEL_SCAN_OP_SUCCESS) {
             auto channel_pool_set =
                 std::unordered_set<uint8_t>(channel_pool, channel_pool + channel_pool_size);
-            op_error_code = database.set_channel_scan_pool(radio_mac, channel_pool_set, false)
+            auto scan_all_channels =
+                channel_pool_size == 1 && *channel_pool_set.begin() == SCAN_ALL_CHANNELS;
+            op_error_code = database.set_channel_scan_pool(radio_mac, channel_pool_set, false,
+                                                           scan_all_channels)
                                 ? op_error_code
                                 : eChannelScanOpErrCode::CHANNEL_SCAN_OP_INVALID_PARAMS_CHANNELPOOL;
         }
@@ -2185,8 +2188,10 @@ void son_management::handle_bml_message(Socket *sd,
             break;
         }
 
-        LOG(DEBUG) << "set_channel_scan_pool " << channel_pool_size;
-        if (!database.set_channel_scan_pool(radio_mac, channel_pool_set, true)) {
+        if (channel_pool_size == 1 && *channel_pool_set.begin() == SCAN_ALL_CHANNELS) {
+            LOG(DEBUG) << "Setting channel pool to all channels";
+            database.set_channel_scan_pool(radio_mac, channel_pool_set, true, true);
+        } else if (!database.set_channel_scan_pool(radio_mac, channel_pool_set, true)) {
             LOG(ERROR) << "set_channel_scan_pool failed";
             response->op_error_code() =
                 uint8_t(eChannelScanOpErrCode::CHANNEL_SCAN_OP_INVALID_PARAMS_CHANNELPOOL);
