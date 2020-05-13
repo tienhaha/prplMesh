@@ -216,6 +216,7 @@ bool monitor_thread::init()
 void monitor_thread::after_select(bool timeout)
 {
     if (!m_logger_configured) {
+        logger.set_thread_name(thread_name);
         logger.attach_current_thread_to_logger_id();
         m_logger_configured = true;
     }
