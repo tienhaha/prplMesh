@@ -516,7 +516,7 @@ public:
      * @return false on failure 
      */
     bool set_channel_scan_pool(const sMacAddr &mac, const std::unordered_set<uint8_t> &channel_pool,
-                               bool single_scan);
+                               bool single_scan, bool scan_all_channels = false);
 
     /**
      * @brief Validate the channel scan pool

@@ -2314,12 +2314,22 @@ bool db::is_channel_scan_pool_supported(const sMacAddr &mac,
 }
 
 bool db::set_channel_scan_pool(const sMacAddr &mac, const std::unordered_set<uint8_t> &channel_pool,
-                               bool single_scan)
+                               bool single_scan, bool scan_all_channels)
 {
     auto hostap = get_hostap_by_mac(mac);
     if (!hostap) {
         LOG(ERROR) << "unable to get hostap";
         return false;
+    }
+
+    if (scan_all_channels) {
+        // Set the channel pool to all supported channels of the current radio.
+        auto &set = (single_scan ? hostap->single_scan_config : hostap->continuous_scan_config)
+                        .channel_pool;
+        std::transform(hostap->supported_channels.begin(), hostap->supported_channels.end(),
+                       std::inserter(set, set.end()),
+                       [](beerocks::message::sWifiChannel &c) -> uint8_t { return c.channel; });
+        return true;
     }
 
     if (!is_channel_scan_pool_supported(mac, channel_pool)) {
