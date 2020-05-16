@@ -801,19 +801,13 @@ bool monitor_thread::handle_cmdu_vs_message(Socket &sd, ieee1905_1::CmduMessageR
         }
 
         auto sta_node = mon_db.sta_find(sta_mac);
-        if (sta_node) {
-            mon_db.sta_erase(sta_mac);
-        }
-
-        auto vap_node = mon_db.vap_get_by_id(vap_id);
-        if (vap_node == nullptr) {
-            LOG(ERROR) << "vap_id " << vap_id << " doesn't not exists";
+        if (!sta_node) {
+            LOG(ERROR) << "sta " << sta_mac << " hasn't been found on mon_db";
             response->success() = false;
             message_com::send_cmdu(slave_socket, cmdu_tx);
             return false;
         }
 
-        sta_node = mon_db.sta_add(sta_mac, vap_id);
         sta_node->set_ipv4(sta_ipv4);
         sta_node->set_bridge_4addr_mac(set_bridge_4addr_mac);
 
