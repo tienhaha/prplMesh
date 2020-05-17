@@ -1654,7 +1654,6 @@ bool backhaul_manager::handle_cmdu(Socket *sd, ieee1905_1::CmduMessageRx &cmdu_r
 
         // Message from controller (bus) to agent (uds)
         // Send the data (uds_header + cmdu) how it is on UDS, without changing it
-        //
 
         cmdu_rx.swap(); // swap back before forwarding
 
@@ -3325,7 +3324,7 @@ bool backhaul_manager::handle_1905_beacon_metrics_query(ieee1905_1::CmduMessageR
                                                         const std::string &src_mac,
                                                         Socket *&forward_to)
 {
-    LOG(INFO) << "now going to handle BEACON METRICS QUERY";
+    LOG(DEBUG) << "now going to handle BEACON METRICS QUERY";
 
     // extract the desired STA mac
     auto tlvBeaconMetricsQuery = cmdu_rx.getClass<wfa_map::tlvBeaconMetricsQuery>();
@@ -3336,9 +3335,9 @@ bool backhaul_manager::handle_1905_beacon_metrics_query(ieee1905_1::CmduMessageR
         return false;
     }
 
-    const sMacAddr &requiredMac = tlvBeaconMetricsQuery->associated_sta_mac();
+    const sMacAddr &requested_mac = tlvBeaconMetricsQuery->associated_sta_mac();
 
-    LOG(DEBUG) << "the requested STA mac is: " << requiredMac;
+    LOG(DEBUG) << "the requested STA mac is: " << requested_mac;
 
     auto radio = findRadioInfo(slaves_sockets, requiredMac);
 
@@ -3351,7 +3350,7 @@ bool backhaul_manager::handle_1905_beacon_metrics_query(ieee1905_1::CmduMessageR
     }
 
     if (!radio) {
-        LOG(WARNING) << "couldn't find any agent for the requested mac: " << requiredMac;
+        LOG(WARNING) << "couldn't find any agent for the requested mac: " << requested_mac;
 
         // add an Error Code TLV
         auto error_code_tlv = cmdu_tx.addClass<wfa_map::tlvErrorCode>();
@@ -3362,7 +3361,7 @@ bool backhaul_manager::handle_1905_beacon_metrics_query(ieee1905_1::CmduMessageR
 
         error_code_tlv->reason_code() =
             wfa_map::tlvErrorCode::STA_NOT_ASSOCIATED_WITH_ANY_BSS_OPERATED_BY_THE_AGENT;
-        error_code_tlv->sta_mac() = requiredMac;
+        error_code_tlv->sta_mac() = requested_mac;
 
         // debug
         std::stringstream errorSS;
@@ -3383,7 +3382,7 @@ bool backhaul_manager::handle_1905_beacon_metrics_query(ieee1905_1::CmduMessageR
     forward_to = radio->slave;
 
     LOG(DEBUG) << "found the radio that has the sation. radio: " << radio->radio_mac
-               << "; station: " << requiredMac;
+               << "; station: " << requested_mac;
 
     LOG(DEBUG) << "BEACON METRICS QUERY: sending ACK message to the originator mid: "
                << int(mid); // USED IN TESTS
