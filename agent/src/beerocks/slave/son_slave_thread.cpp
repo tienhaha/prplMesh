@@ -380,13 +380,9 @@ bool slave_thread::handle_cmdu_control_ieee1905_1_message(Socket *sd,
     case ieee1905_1::eMessageType::AP_AUTOCONFIGURATION_WSC_MESSAGE:
         return handle_autoconfiguration_wsc(sd, cmdu_rx);
     case ieee1905_1::eMessageType::AP_METRICS_QUERY_MESSAGE:
-<<<<<<< HEAD
         return handle_ap_metrics_query(*sd, cmdu_rx);
-=======
-        return handle_ap_metrics_query(sd, cmdu_rx);
     case ieee1905_1::eMessageType::BEACON_METRICS_QUERY_MESSAGE:
         return handle_beacon_metrics_query_request(sd, cmdu_rx);
->>>>>>> 05233392... agent: son slave: handling beacon metrics query
     case ieee1905_1::eMessageType::CHANNEL_PREFERENCE_QUERY_MESSAGE:
         return handle_channel_preference_query(sd, cmdu_rx);
     case ieee1905_1::eMessageType::CHANNEL_SELECTION_REQUEST_MESSAGE:
@@ -4558,9 +4554,6 @@ bool slave_thread::handle_client_steering_request(Socket *sd, ieee1905_1::CmduMe
     }
 }
 
-<<<<<<< HEAD
-bool slave_thread::handle_ap_metrics_query(Socket &sd, ieee1905_1::CmduMessageRx &cmdu_rx)
-=======
 bool slave_thread::handle_beacon_metrics_query_request(Socket *sd,
                                                        ieee1905_1::CmduMessageRx &cmdu_rx)
 {
@@ -4586,8 +4579,7 @@ bool slave_thread::handle_beacon_metrics_query_request(Socket *sd,
     return true;
 }
 
-bool slave_thread::handle_ap_metrics_query(Socket *sd, ieee1905_1::CmduMessageRx &cmdu_rx)
->>>>>>> 05233392... agent: son slave: handling beacon metrics query
+bool slave_thread::handle_ap_metrics_query(Socket &sd, ieee1905_1::CmduMessageRx &cmdu_rx)
 {
     const auto mid = cmdu_rx.getMessageId();
     LOG(DEBUG) << "Forwarding AP_METRICS_QUERY_MESSAGE to monitor_socket, mid=" << std::hex
