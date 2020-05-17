@@ -1684,6 +1684,7 @@ bool slave_thread::handle_cmdu_ap_manager_message(Socket *sd,
             LOG(ERROR) << "getting supported channels has failed!";
             return false;
         }
+        supported_channels.clear();
         supported_channels.insert(
             supported_channels.begin(), &std::get<1>(tuple_supported_channels),
             &std::get<1>(tuple_supported_channels) + notification->supported_channels_size());
@@ -3507,9 +3508,20 @@ bool slave_thread::slave_fsm(bool &call_slave_select)
         }
 
         std::array<beerocks::message::sWifiChannel, beerocks::message::SUPPORTED_CHANNELS_LENGTH>
-            supported_channels_arr;
-        std::copy_n(supported_channels.begin(), supported_channels_arr.size(),
+            supported_channels_arr{{}};
+        std::copy_n(supported_channels.begin(), supported_channels.size(),
                     supported_channels_arr.begin());
+
+        std::ostringstream os;
+        for (const auto &val : supported_channels_arr) {
+            if (val.channel > 0) {
+                os << " ch = " << int(val.channel) << " | dfs = " << int(val.is_dfs_channel)
+                   << " | bw = " << int(val.channel_bandwidth) << " | tx_pow = " << int(val.tx_pow)
+                   << " | noise = " << int(val.noise) << " [dbm]"
+                   << " | bss_overlap = " << int(val.bss_overlap) << std::endl;
+            }
+        }
+        LOG(DEBUG) << "#IZE# Supported Channels: " << std::endl << os.str();
 
         if (!tlvf_utils::add_ap_radio_basic_capabilities(cmdu_tx, hostap_params.iface_mac,
                                                          supported_channels_arr)) {
