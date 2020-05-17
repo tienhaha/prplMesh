@@ -1636,8 +1636,16 @@ bool backhaul_manager::handle_cmdu(Socket *sd, ieee1905_1::CmduMessageRx &cmdu_r
         // Handle the CMDU message. If the message was processed locally
         // (by the Backhaul Manager), this function will return 'true'.
         // Otherwise, it should be forwarded to the slaves.
-        Socket *destinationAP = nullptr;
-        if (handle_1905_1_message(cmdu_rx, src_mac, destinationAP)) {
+        
+
+        // the destination slave is used to forward the cmdu
+        // only to the desired slave.
+        // handle_1905_1_message has the opportunity to set it 
+        // to a speficic slave. In this case the cmdu is forward only
+        // to this slave. when dest_slave is left as nullptr
+        // the cmdu is forwarded to all slaves
+        Socket *dest_slave = nullptr;
+        if (handle_1905_1_message(cmdu_rx, src_mac, dest_slave)) {
             //function returns true if message doesn't need to be forwarded
             return true;
         }
@@ -1650,19 +1658,19 @@ bool backhaul_manager::handle_cmdu(Socket *sd, ieee1905_1::CmduMessageRx &cmdu_r
 
         cmdu_rx.swap(); // swap back before forwarding
 
-        if (!destinationAP) {
+        if (dest_slave) {
+            // Forward only to the desired destination
+            if (!message_com::forward_cmdu_to_uds(dest_slave, cmdu_rx, length)) {
+                LOG(ERROR) << "forward_cmdu_to_uds() failed - " << print_cmdu_types(uds_header)
+                           << " sd=" << intptr_t(dest_slave);
+            }
+        } else {
             // Forward cmdu to all slaves how it is on UDS, without changing it
             for (auto soc_iter : slaves_sockets) {
                 if (!message_com::forward_cmdu_to_uds(soc_iter->slave, cmdu_rx, length)) {
                     LOG(ERROR) << "forward_cmdu_to_uds() failed - " << print_cmdu_types(uds_header)
                                << " sd=" << intptr_t(soc_iter->slave);
                 }
-            }
-        } else {
-            // Forward only to the desired destination
-            if (!message_com::forward_cmdu_to_uds(destinationAP, cmdu_rx, length)) {
-                LOG(ERROR) << "forward_cmdu_to_uds() failed - " << print_cmdu_types(uds_header)
-                           << " sd=" << intptr_t(destinationAP);
             }
         }
     } else { // from uds to bus or local handling (ACTION_BACKHAUL)
