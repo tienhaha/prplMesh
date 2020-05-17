@@ -1604,11 +1604,10 @@ bool backhaul_manager::handle_cmdu(Socket *sd, ieee1905_1::CmduMessageRx &cmdu_r
         // Handle the CMDU message. If the message was processed locally
         // (by the Backhaul Manager), this function will return 'true'.
         // Otherwise, it should be forwarded to the slaves.
-        
 
         // the destination slave is used to forward the cmdu
         // only to the desired slave.
-        // handle_1905_1_message has the opportunity to set it 
+        // handle_1905_1_message has the opportunity to set it
         // to a speficic slave. In this case the cmdu is forward only
         // to this slave. when dest_slave is left as nullptr
         // the cmdu is forwarded to all slaves
@@ -3318,7 +3317,8 @@ bool backhaul_manager::handle_1905_beacon_metrics_query(ieee1905_1::CmduMessageR
     }
 
     if (!radio) {
-        LOG(DEBUG) << "STA with MAC [" << requested_sta_mac << "] is not associated with any BSS operated by the agent";
+        LOG(DEBUG) << "STA with MAC [" << requested_sta_mac
+                   << "] is not associated with any BSS operated by the agent";
 
         // add an Error Code TLV
         auto error_code_tlv = cmdu_tx.addClass<wfa_map::tlvErrorCode>();
