@@ -3303,11 +3303,11 @@ bool backhaul_manager::handle_1905_beacon_metrics_query(ieee1905_1::CmduMessageR
         return false;
     }
 
-    const sMacAddr &requested_mac = tlvBeaconMetricsQuery->associated_sta_mac();
+    const sMacAddr &requested_sta_mac = tlvBeaconMetricsQuery->associated_sta_mac();
 
-    LOG(DEBUG) << "the requested STA mac is: " << requested_mac;
+    LOG(DEBUG) << "the requested STA mac is: " << requested_sta_mac;
 
-    const auto radio = get_sta_radio(requested_mac);
+    const auto radio = get_sta_radio(requested_sta_mac);
 
     // build ACK message CMDU
     const auto mid      = cmdu_rx.getMessageId();
@@ -3318,7 +3318,7 @@ bool backhaul_manager::handle_1905_beacon_metrics_query(ieee1905_1::CmduMessageR
     }
 
     if (!radio) {
-        LOG(WARNING) << "couldn't find any agent for the requested mac: " << requested_mac;
+        LOG(DEBUG) << "STA with MAC [" << requested_sta_mac << "] is not associated with any BSS operated by the agent";
 
         // add an Error Code TLV
         auto error_code_tlv = cmdu_tx.addClass<wfa_map::tlvErrorCode>();
@@ -3329,28 +3329,28 @@ bool backhaul_manager::handle_1905_beacon_metrics_query(ieee1905_1::CmduMessageR
 
         error_code_tlv->reason_code() =
             wfa_map::tlvErrorCode::STA_NOT_ASSOCIATED_WITH_ANY_BSS_OPERATED_BY_THE_AGENT;
-        error_code_tlv->sta_mac() = requested_mac;
+        error_code_tlv->sta_mac() = requested_sta_mac;
 
-        // debug
+        // report the error
         std::stringstream errorSS;
         auto error_tlv = cmdu_tx.getClass<wfa_map::tlvErrorCode>();
         if (error_tlv) {
             errorSS << "0x" << error_tlv->reason_code();
         } else {
-            errorSS << "no error";
+            errorSS << "note: error constructing the error itself";
         }
-        // end debug
 
         LOG(DEBUG) << "sending ACK message to the originator with an error, mid: " << std::hex
                    << int(mid) << " tlv error code: " << errorSS.str();
 
+        // send the error
         return send_cmdu_to_bus(cmdu_tx, src_mac, bridge_info.mac);
     }
 
     forward_to = radio->slave;
 
     LOG(DEBUG) << "found the radio that has the sation. radio: " << radio->radio_mac
-               << "; station: " << requested_mac;
+               << "; station: " << requested_sta_mac;
 
     LOG(DEBUG) << "BEACON METRICS QUERY: sending ACK message to the originator mid: "
                << int(mid); // USED IN TESTS
