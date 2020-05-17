@@ -784,7 +784,7 @@ bool mon_wlan_hal_dwpal::sta_beacon_11k_request(const SBeaconRequest11k &req, in
     // note: currently there is no field in SBeaconRequest11k that holds this optional field
     cmd += " rep_detail=2";
 
-    LOG(DEBUG) << __func__ << " the command: " << cmd;
+    LOG(DEBUG) << " the command: " << cmd;
 
     // send command
     if (!dwpal_send_cmd(cmd, &reply)) {
