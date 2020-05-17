@@ -382,7 +382,7 @@ bool slave_thread::handle_cmdu_control_ieee1905_1_message(Socket *sd,
     case ieee1905_1::eMessageType::AP_METRICS_QUERY_MESSAGE:
         return handle_ap_metrics_query(*sd, cmdu_rx);
     case ieee1905_1::eMessageType::BEACON_METRICS_QUERY_MESSAGE:
-        return handle_beacon_metrics_query_request(sd, cmdu_rx);
+        return handle_beacon_metrics_query(sd, cmdu_rx);
     case ieee1905_1::eMessageType::CHANNEL_PREFERENCE_QUERY_MESSAGE:
         return handle_channel_preference_query(sd, cmdu_rx);
     case ieee1905_1::eMessageType::CHANNEL_SELECTION_REQUEST_MESSAGE:
@@ -3915,10 +3915,10 @@ bool slave_thread::autoconfig_wsc_calculate_keys(WSC::m2 &m2, uint8_t authkey[32
 
 /**
  * @brief autoconfig global authenticator attribute calculation
- * 
+ *
  * Calculate authentication on the Full M1 || M2* whereas M2* = M2 without the authenticator
  * attribute. M1 is a saved buffer of the swapped M1 sent in the WSC autoconfig sent by the agent.
- * 
+ *
  * @param m2 WSC M2 attribute list from the controller
  * @param authkey authentication key
  * @return true on success
@@ -4091,7 +4091,7 @@ bool slave_thread::handle_autoconfiguration_renew(Socket *sd, ieee1905_1::CmduMe
 /**
  * @brief Parse AP-Autoconfiguration WSC which should include one AP Radio Identifier
  *        TLV and one or more WSC TLV containing M2
- * 
+ *
  * @param sd socket descriptor
  * @param cmdu_rx received CMDU containing M2
  * @return true on success
@@ -4554,8 +4554,7 @@ bool slave_thread::handle_client_steering_request(Socket *sd, ieee1905_1::CmduMe
     }
 }
 
-bool slave_thread::handle_beacon_metrics_query_request(Socket *sd,
-                                                       ieee1905_1::CmduMessageRx &cmdu_rx)
+bool slave_thread::handle_beacon_metrics_query(Socket *sd, ieee1905_1::CmduMessageRx &cmdu_rx)
 {
     auto mid = cmdu_rx.getMessageId();
     LOG(DEBUG) << "Received BEACON_METRICS_QUERY_MESSAGE, mid=" << std::hex << int(mid);
@@ -4627,11 +4626,11 @@ bool slave_thread::handle_channel_preference_query(Socket *sd, ieee1905_1::CmduM
 }
 
 /**
- * @brief Get the channel preference 
+ * @brief Get the channel preference
  *
  * @pre The channel operating class and the preference operating class have to match.
  * @param channel channel to check
- * @param preference preference 
+ * @param preference preference
  * @return NON_OPERABLE if channel is restricted, channel preference otherwise
  */
 static uint8_t get_channel_preference(const beerocks::message::sWifiChannel channel,
