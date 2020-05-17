@@ -121,6 +121,79 @@ class TestFlows:
                                packet.ieee1905_message_type == msg_type and
                                (mid is None or packet.ieee1905_mid == mid))
 
+    def check_topology_notification(self, eth_src: str, neighbors: list,
+                                    sta: env.Station = None,
+                                    sta_bssid: str = None) -> bool:
+        """Verify topology notification reliable multicast - given a source mac and
+           a list of neighbors macs, check that exactly one relayed multicast CMDU
+           was sent to the IEEE1905.1 multicast MAC address, and a single unicast
+           CMDU with the relayed bit unset to each of the given neighbors destination MACs.
+           If sta_mac and sta_event are passed, check that the topology notification contains
+           the expected event for that station.
+           Mark failure if any of the above conditions isn't met.
+
+        Parameters
+        ----------
+
+        eth_src: str
+            source AL MAC (origin of the topology notification)
+
+        neighbors: list
+            destination AL MACs (destinations of the topology notification)
+
+        sta: environment.Station
+            optional - station mac to check
+
+        sta_bssid: str
+            if sta is set, check if it is connected to bssid.
+            if sta is not set, check that it is not connected.
+
+        Returns:
+        bool
+            True for valid topology notification, False otherwise
+        """
+        multicast = self.check_cmdu_type("topology notification", 0x1, eth_src)
+        if len(multicast) != 1:
+            self.fail("Recived more than one multicast topology notification")
+            return False
+        if not multicast[0].ieee1905_relay_indicator:
+            self.fail("Multicast topology notification should be relayed")
+            return False
+
+        mid = multicast[0].ieee1905_mid
+        for eth_dst in neighbors:
+            unicast = self.check_cmdu_type("topology notification", 0x1, eth_src, eth_dst)
+            if len(unicast) != 1:
+                self.fail("Recieved {} topology notifications to {} (should be one)".format(
+                    len(unicast), eth_dst))
+                return False
+            if unicast[0].ieee1905_mid != mid:
+                self.fail("MID mismatch {} != {}".format(unicast[0].ieee1905_mid, mid))
+                return False
+            if unicast[0].ieee1905_relay_indicator:
+                self.fail("Unicast topology notification should not be relayed")
+                return False
+
+        if sta:
+            if sta_bssid:
+                # STA connected event, check that client mac connected to the given bssid
+                assoc_event_client_mac = multicast[0].ieee1905_tlvs[0].assoc_event_client_mac
+                assoc_event_agent_bssid = multicast[0].ieee1905_tlvs[0].assoc_event_agent_bssid
+                if assoc_event_client_mac != sta.mac:
+                    self.fail("Invalid client mac found in tlv - searched {}, found {}"
+                              .format(sta.mac, assoc_event_client_mac))
+                    return False
+                if assoc_event_agent_bssid != sta_bssid:
+                    self.fail(
+                        "Invalid agent bssid found in tlv - searched {}, found {}"
+                        .format(sta_bssid, assoc_event_agent_bssid))
+                    return False
+            else:
+                # STA disconnected event
+                debug(multicast[0].ieee1905_tlvs[0])
+
+        return True
+
     def run_tests(self, tests):
         '''Run all tests as specified on the command line.'''
         total_errors = 0
@@ -247,8 +320,9 @@ class TestFlows:
         # Same test as the previous one but using CLI instead of dev_send_1905
 
         env.beerocks_cli_command('bml_clear_wifi_credentials {}'.format(env.agents[0].mac))
-        env.beerocks_cli_command('bml_set_wifi_credentials {} {} {} {} {}'.format(env.agents[0].mac,
-                                 "Multi-AP-24G-3-cli", "maprocks1", "24g", "fronthaul"))
+        env.beerocks_cli_command('bml_set_wifi_credentials {} {} {} {} {}'
+                                 .format(env.agents[0].mac,
+                                         "Multi-AP-24G-3-cli", "maprocks1", "24g", "fronthaul"))
         env.beerocks_cli_command('bml_update_wifi_credentials {}'.format(env.agents[0].mac))
 
         # Wait a bit for the renew to complete
@@ -704,8 +778,19 @@ e1 09 00 bf 0c b0 79 d1 33 fa ff 0c 03 fa ff 0c
     def test_client_steering_dummy(self):
         sta = env.Station.create()
 
+        env.checkpoint()
+
         debug("Connect dummy STA to wlan0")
         env.agents[0].radios[0].vaps[0].associate(sta)
+        time.sleep(1)
+
+        debug("Check dummy STA connected to repeater1 radio")
+        self.check_topology_notification(env.agents[0].mac,
+                                         [env.controller.mac, env.agents[1].mac],
+                                         sta, env.agents[0].radios[0].vaps[0].bssid)
+
+        env.checkpoint()
+
         debug("Send steer request ")
         env.beerocks_cli_command("steer_client {} {}".format(sta.mac, env.agents[0].radios[1].mac))
         time.sleep(1)
