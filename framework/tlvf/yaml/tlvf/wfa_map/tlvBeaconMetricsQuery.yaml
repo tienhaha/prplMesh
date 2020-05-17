@@ -41,4 +41,4 @@ cApChannelReports:
   ap_channel_report_list:
     _type: uint8_t
     _length: [ ap_channel_report_list_length ]
-    _comment: The first element of this list is the operating class.  
+    _comment: The first element of this list is the operating class.
