@@ -215,8 +215,9 @@ bool master_thread::handle_cmdu(Socket *sd, ieee1905_1::CmduMessageRx &cmdu_rx)
     std::string src_mac = tlvf::mac_to_string(uds_header->src_bridge_mac);
     std::string dst_mac = tlvf::mac_to_string(uds_header->dst_bridge_mac);
 
-    // LOG(DEBUG) << "handle_cmdu() - received msg from " << std::string(from_bus(sd) ? "bus" : "uds") << ", src=" << src_mac
-    //            << ", dst=" << dst_mac << ", " << print_cmdu_types(uds_header); // floods the log
+    LOG(DEBUG) << "handle_cmdu() - received msg from " << std::string(from_bus(sd) ? "bus" : "uds")
+               << ", src=" << src_mac << ", dst=" << dst_mac << ", "
+               << print_cmdu_types(uds_header); // floods the log
 
     if (from_bus(sd)) {
 
