@@ -3,6 +3,7 @@
 #include <bcl/beerocks_defines.h>
 #include <mapf/common/utils.h>
 
+namespace beerocks{
 namespace gate {
 
 bool load(std::shared_ptr<beerocks_message::cACTION_MONITOR_CLIENT_BEACON_11K_REQUEST> lhs,
@@ -111,3 +112,4 @@ bool load(std::shared_ptr<beerocks_message::cACTION_MONITOR_CLIENT_BEACON_11K_RE
 }
 
 } // namespace gate
+} // namespace beerocks

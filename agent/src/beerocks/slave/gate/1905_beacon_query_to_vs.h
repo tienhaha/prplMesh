@@ -13,14 +13,23 @@
 #include <tlvf/CmduMessageRx.h>
 #include <tlvf/wfa_map/tlvBeaconMetricsQuery.h>
 
+namespace beerocks{
 namespace gate {
 
-// loads lhs with rhs. as if it was written: lhs = rhs; or lhs << rhs;
+// 
 // however load() was chosen over operator=() or operator<<() as it permits returning success/fail with the bool return value,
 // and also it opens the possibilites for adding additional parameters in the future if needed
+/**
+ * @brief loads lhs with rhs. as if it was written: lhs = rhs; or lhs << rhs;
+ *
+ * @param[out] lhs - shared ptr to vs beacon request
+ * @param[in] rhs  - 1905 beacon metric query encapsulated in a cmdu
+ * @return sucess/fail as bool
+ */
 bool load(std::shared_ptr<beerocks_message::cACTION_MONITOR_CLIENT_BEACON_11K_REQUEST> lhs,
           const ieee1905_1::CmduMessageRx &rhs);
 
 } // namespace gate
+} // namespace beerocks
 
 #endif
