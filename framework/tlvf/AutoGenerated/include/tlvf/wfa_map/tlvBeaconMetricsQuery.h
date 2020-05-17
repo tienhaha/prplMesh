@@ -23,7 +23,6 @@
 #include "tlvf/wfa_map/eTlvTypeMap.h"
 #include "tlvf/common/sMacAddr.h"
 #include <tuple>
-#include <tlvf/tlvfutils.h>
 #include <vector>
 
 namespace wfa_map {
