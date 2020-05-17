@@ -7,6 +7,7 @@
  */
 
 #include <mapf/transport/ieee1905_transport.h>
+#include <tlvf/ieee_1905_1/eMessageType.h>
 
 #include <arpa/inet.h>
 #include <chrono>
@@ -457,7 +458,7 @@ bool Ieee1905Transport::fragment_and_send_packet_to_network_interface(unsigned i
 // Network      Multicast                     +           -                   -                               will be forwarded by linux bridge interface
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 //
-bool Ieee1905Transport::forward_packet(Packet &packet)
+bool Ieee1905Transport::forward_packet_single(Packet &packet)
 {
     if (packet.dst_if_type == CmduRxMessage::IF_TYPE_LOCAL_BUS) {
         MAPF_DBG("forwarding packet to local bus.");
@@ -574,6 +575,64 @@ bool Ieee1905Transport::forward_packet(Packet &packet)
     }
 
     return true;
+}
+
+/**
+ * @brief forward a 1905.1 packet.
+ * 
+ * Basically a wrapper to forward_packet_single, which also takes into account the reliable
+ * multicast procedure - according to section 15.1 in the Multi-AP specification, a reliable multicast
+ * transmission includes sending the packet with the relay bit set to a multicast address once,
+ * and once for each discovered Multi-AP agent in the network as unicast
+ * with the same MID and the relay bit unset.
+ * 
+ * @param packet packet to forward
+ * @return true on success
+ * @return false on failure (one or more packets failed in transmission)
+ */
+bool Ieee1905Transport::forward_packet(Packet &packet)
+{
+    // First, forward the packet as is.
+    bool success = forward_packet_single(packet);
+    if (!success) {
+        MAPF_DBG("Failed to forward packet " << packet);
+        return false;
+    }
+
+    // Check if this packet should also go through reliable multicast:
+    // 1. Destination is multicast
+    // 2. Message type is topology notification, which is currently the only
+    //    message which should be sent using reliable multicast. See Multi-AP
+    //    specification Table 5
+    auto should_send_reliable_multicast = [&](const Packet &packet) -> bool {
+        Ieee1905CmduHeader *ch = (Ieee1905CmduHeader *)packet.payload.iov_base;
+        return ETHER_IS_MULTICAST(packet.dst.oct) && ch->GetRelayIndicator() &&
+               ntohs(ch->messageType) ==
+                   static_cast<uint16_t>(ieee1905_1::eMessageType::TOPOLOGY_NOTIFICATION_MESSAGE);
+    };
+    if (!should_send_reliable_multicast(packet)) {
+        return true;
+    }
+
+    // Reliable multicast - send to all known neighbours.
+    // Avoid loops by skipping the neighbor which sent the message
+    // Note - we are reusing the same packet, so this part has to come
+    // after the original packet (relayed multicast) has been sent.
+    // Change the packet destination each time to the neighbour AL MAC
+    Ieee1905CmduHeader *ch = (Ieee1905CmduHeader *)packet.payload.iov_base;
+    ch->SetRelayIndicator(false);
+    for (const auto &neigh : neighbors_map_) {
+        if (neigh.second.al_mac == packet.src || packet.src_if_index == neigh.second.if_index) {
+            continue;
+        }
+        packet.dst = neigh.second.al_mac;
+        if (!forward_packet_single(packet)) {
+            MAPF_ERR("Reliable multicast failed, dropped packet: " << packet);
+            success = false;
+        }
+    }
+
+    return success;
 }
 
 std::ostream &Ieee1905Transport::Packet::print(std::ostream &os) const
