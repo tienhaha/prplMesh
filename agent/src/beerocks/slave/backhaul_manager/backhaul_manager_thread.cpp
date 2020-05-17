@@ -109,38 +109,6 @@ namespace beerocks {
 #define FSM_CURR_STATE_STR s_arrStates[int(m_eFSMState)]
 
 //////////////////////////////////////////////////////////////////////////////
-/////////////////////////////// Helper Functions /////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-
-template <class SlavesContainer, class MAC>
-std::shared_ptr<backhaul_manager::sRadioInfo> findRadioInfo(const SlavesContainer &slave_container,
-                                                            const MAC &mac)
-{
-    // for each radio info in the container
-    //      for each associated client
-    //          find if there is an entry with the given mac within this associated client
-
-    for (const auto &slave : slave_container) {
-        if (!slave) {
-            continue;
-        }
-
-        LOG(DEBUG) << "looking into info for hostap iface: " << slave->hostap_iface;
-
-        for (const auto &client : slave->associated_clients_map) {
-            LOG(DEBUG) << "looking for " << mac
-                       << " within the current associated client map: " << client.first;
-
-            if (client.second.find(mac) != client.second.end()) {
-                return slave;
-            }
-        }
-    }
-
-    return nullptr;
-}
-
-//////////////////////////////////////////////////////////////////////////////
 /////////////////////////////// Static Members ///////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
@@ -3339,7 +3307,7 @@ bool backhaul_manager::handle_1905_beacon_metrics_query(ieee1905_1::CmduMessageR
 
     LOG(DEBUG) << "the requested STA mac is: " << requested_mac;
 
-    auto radio = findRadioInfo(slaves_sockets, requiredMac);
+    const auto radio = get_sta_radio(requested_mac);
 
     // build ACK message CMDU
     const auto mid      = cmdu_rx.getMessageId();
